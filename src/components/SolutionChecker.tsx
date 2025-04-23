@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
 import { ValidationService } from '@/lib/validationService';
+import { applyPositionFeedback, applyIndentationFeedback } from '@/lib/parsonsFeedback';
 
 interface SolutionCheckerProps {
   problemId?: string;
   onCheckComplete?: (isCorrect: boolean) => void;
 }
 
-/**
- * Component for checking Parsons problem solutions and providing feedback
- */
 const SolutionChecker: React.FC<SolutionCheckerProps> = ({ 
   problemId,
   onCheckComplete
@@ -19,7 +17,6 @@ const SolutionChecker: React.FC<SolutionCheckerProps> = ({
     userSolution, 
     setFeedback, 
     setIsCorrect, 
-    isCorrect, 
     isLoading, 
     setIsLoading 
   } = useParsonsContext();
@@ -36,11 +33,18 @@ const SolutionChecker: React.FC<SolutionCheckerProps> = ({
     
     try {
       if (problemId) {
-        // Use the backend API to check the solution
+        // Use backend validation
         const checkResult = await validationService.validateSolution(problemId, userSolution);
         setIsCorrect(checkResult.isCorrect);
         
-        // Generate feedback if solution is incorrect
+        // Apply visual feedback
+        if (currentProblem) {
+          const positionFeedback = applyPositionFeedback(userSolution, currentProblem.model_solution);
+          const indentFeedback = applyIndentationFeedback(userSolution, currentProblem.model_solution);
+          // Apply feedback to DOM elements...
+        }
+        
+        // Generate Socratic feedback if incorrect
         if (!checkResult.isCorrect) {
           const feedbackText = await validationService.generateFeedback(problemId, userSolution);
           setFeedback(feedbackText);
@@ -48,9 +52,14 @@ const SolutionChecker: React.FC<SolutionCheckerProps> = ({
           setFeedback("Great job! Your solution is correct.");
         }
       } else if (currentProblem) {
-        // Use local validation if no problemId is provided
+        // Use local validation
         const checkResult = validationService.validateSolutionLocally(currentProblem, userSolution);
         setIsCorrect(checkResult.isCorrect);
+        
+        // Apply visual feedback
+        const positionFeedback = applyPositionFeedback(userSolution, currentProblem.model_solution);
+        const indentFeedback = applyIndentationFeedback(userSolution, currentProblem.model_solution);
+        // Apply feedback to DOM elements...
         
         // Generate local feedback
         const feedbackText = validationService.generateLocalFeedback(currentProblem, userSolution);

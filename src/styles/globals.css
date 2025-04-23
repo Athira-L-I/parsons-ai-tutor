@@ -56,3 +56,23 @@ body {
 .prose pre code {
   @apply bg-transparent p-0;
 }
+
+.parsons-toggle {
+  padding: 0 15px;
+  display: inline-block;
+  border: 1px dashed black;
+  z-index: 500;
+  cursor: pointer;
+  min-width: 10px;
+  min-height: 15px;
+}
+
+.parsons-toggle:empty {
+  border-color: red;
+}
+
+.parsons-toggle:empty:before {
+  content: "??";
+  display: block;
+  color: red;
+}

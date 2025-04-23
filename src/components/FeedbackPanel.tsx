@@ -15,13 +15,13 @@ const FeedbackPanel: React.FC = () => {
       ) : (
         <div>
           {isCorrect === true && (
-            <div className="p-3 bg-green-100 text-green-800 rounded mb-3">
+            <div className="p-3 bg-parsons-correct text-green-800 rounded mb-3">
               <span className="font-bold">Correct!</span> Your solution is right.
             </div>
           )}
           
           {isCorrect === false && (
-            <div className="p-3 bg-red-100 text-red-800 rounded mb-3">
+            <div className="p-3 bg-parsons-incorrect text-red-800 rounded mb-3">
               <span className="font-bold">Not quite right.</span> Try again with the hints below.
             </div>
           )}
@@ -29,7 +29,9 @@ const FeedbackPanel: React.FC = () => {
           {feedback ? (
             <div className="prose max-w-none">
               <h4 className="text-md font-medium mb-2">Hint:</h4>
-              <p className="text-gray-700 whitespace-pre-line">{feedback}</p>
+              <div className="bg-white p-3 rounded border font-mono text-sm">
+                {feedback}
+              </div>
             </div>
           ) : (
             <p className="text-gray-500 italic">
