@@ -1,0 +1,41 @@
+{
+  "name": "parsons-problem-tutor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@types/codemirror": "^5.60.15",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.8.4",
+    "cash-dom": "^8.1.5",
+    "codemirror": "^5.65.19",
+    "esprima": "^4.0.1",
+    "next": "^14.2.28",
+    "postcss": "^8.5.3",
+    "react": "^18.3.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "zustand": "^4.5.6"
+  },
+  "devDependencies": {
+    "@types/esprima": "^4.0.6",
+    "@types/node": "^20.17.30",
+    "@types/react": "^18.3.20",
+    "@types/react-dom": "^18.3.6",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.28",
+    "typescript": "^5.8.3"
+  },
+  "description": "A modern learning platform that helps students learn programming through code reordering exercises with AI-based Socratic feedback.",
+  "main": "next.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
