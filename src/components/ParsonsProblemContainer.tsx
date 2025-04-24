@@ -35,10 +35,11 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
     setCurrentProblem, 
     userSolution, 
     isCorrect, 
-    feedback 
+    feedback,
+    attempts // Get attempts from context
   } = useParsonsContext();
   
-  const [attempts, setAttempts] = useState(0);
+  // Remove local attempts state - we're using context now
   
   // Initialize with the provided problem if available
   useEffect(() => {
@@ -47,12 +48,13 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
     }
   }, [initialProblem, currentProblem, setCurrentProblem]);
   
-  // Handle completion of the check
+  // Handle completion of the check (you can keep this for other side effects)
   const handleCheckComplete = (isCorrect: boolean) => {
-    setAttempts(prev => prev + 1);
+    // Don't need to increment attempts here anymore
+    console.log("Solution checked, is correct:", isCorrect);
   };
   
-  // Simplify the structure - remove redundant components
+  // Use attempts from context in your rendering
   return (
     <div className="parsons-problem-container">
       <div className="mb-6">
@@ -88,6 +90,7 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
             problemId={problemId}
             title={title}
             description={description}
+            onCheckSolution={handleCheckComplete}
           />
           
           {/* Only include FeedbackPanel once */}

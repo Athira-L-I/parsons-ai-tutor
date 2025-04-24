@@ -14,16 +14,26 @@ declare global {
   }
 }
 
+// Update the props interface
 interface ParsonsWidgetProps {
   problemId?: string;
   onSolutionChange?: (solution: string[]) => void;
+  onCheckSolution?: (isCorrect: boolean) => void;
 }
 
+// Use the increment function from context
 const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({ 
   problemId,
-  onSolutionChange 
+  onSolutionChange,
+  onCheckSolution
 }) => {
-  const { currentProblem, setUserSolution, setIsCorrect, isCorrect } = useParsonsContext();
+  const { 
+    currentProblem, 
+    setUserSolution, 
+    setIsCorrect, 
+    isCorrect,
+    incrementAttempts // Get this from context 
+  } = useParsonsContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const [parsonsWidget, setParsonsWidget] = useState<any>(null);
   const sortableId = 'parsons-sortable';
@@ -182,28 +192,27 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
     }
   };
   
-  // Modify the checkSolution function
+  // Update checkSolution to increment attempts
   const checkSolution = () => {
     if (!parsonsWidget) return;
     
     try {
-      // Remove any existing feedback elements created by this component
-      const existingFeedback = document.querySelector('.parsons-feedback');
-      if (existingFeedback) {
-        existingFeedback.remove();
-      }
+      // Increment attempts
+      incrementAttempts();
       
       // Get feedback
       const feedback = parsonsWidget.getFeedback();
       console.log("Check solution feedback:", feedback);
       
-      // Update application state but don't display feedback here
+      // Update application state
       if (feedback.success !== undefined) {
         setIsCorrect(feedback.success);
+        
+        // Call the onCheckSolution callback
+        if (onCheckSolution) {
+          onCheckSolution(feedback.success);
+        }
       }
-      
-      // Don't create a feedback element here, let FeedbackPanel handle display
-      // Just update the context state that FeedbackPanel will use
     } catch (error) {
       console.error("Error checking solution:", error);
     }

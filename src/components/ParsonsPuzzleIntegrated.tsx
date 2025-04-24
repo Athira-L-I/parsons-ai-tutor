@@ -4,16 +4,19 @@ import { loadParsonsWidget, isParsonsWidgetLoaded } from '@/lib/parsonsLoader';
 import ParsonsWidgetComponent from './ParsonsWidget';
 import FeedbackPanel from './FeedbackPanel';
 
+// Update the component's props interface
 interface ParsonsPuzzleIntegratedProps {
   problemId?: string;
   title?: string;
   description?: string;
+  onCheckSolution?: (isCorrect: boolean) => void;
 }
 
 const ParsonsPuzzleIntegrated: React.FC<ParsonsPuzzleIntegratedProps> = ({ 
   problemId,
   title = 'Parsons Problem',
-  description = 'Rearrange the code blocks to form a correct solution.'
+  description = 'Rearrange the code blocks to form a correct solution.',
+  onCheckSolution 
 }) => {
   const { currentProblem, isCorrect, setUserSolution } = useParsonsContext();
   const [isLoading, setIsLoading] = useState(true);
@@ -41,8 +44,10 @@ const ParsonsPuzzleIntegrated: React.FC<ParsonsPuzzleIntegratedProps> = ({
     }
   }, []);
   
+  // Add this to call onCheckSolution when solution is checked
   const handleSolutionChange = (solution: string[]) => {
     setUserSolution(solution);
+    // No need to call onCheckSolution here, it will be called after checking the solution
   };
   
   if (isLoading) {
@@ -62,38 +67,26 @@ const ParsonsPuzzleIntegrated: React.FC<ParsonsPuzzleIntegratedProps> = ({
     );
   }
   
+  // Pass onCheckSolution to ParsonsWidget
   return (
-    <div className="parsons-problem-container">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">{title}</h1>
-        {description && (
-          <p className="text-gray-700">{description}</p>
-        )}
-      </div>
+    <div className="parsons-puzzle-integrated">
+      {/* No title or description here - these are handled by the parent container */}
       
       {currentProblem && (
         <>
-          <div className="mb-4">
-            <div className="stats flex gap-4 text-sm mb-4">
-              {isCorrect !== null && (
-                <div className={`stat p-2 rounded ${
-                  isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  <span className="font-medium">Status:</span> {isCorrect ? 'Correct' : 'Incorrect'}
-                </div>
-              )}
-            </div>
-          </div>
+          {/* No status information here either */}
           
           <ParsonsWidgetComponent 
             problemId={problemId}
             onSolutionChange={handleSolutionChange}
+            onCheckSolution={onCheckSolution}
           />
           
+          {/* No FeedbackPanel here */}
         </>
       )}
-  </div>
-);
+    </div>
+  );
 };
 
 export default ParsonsPuzzleIntegrated;
