@@ -90,11 +90,10 @@ const ParsonsPuzzleIntegrated: React.FC<ParsonsPuzzleIntegratedProps> = ({
             onSolutionChange={handleSolutionChange}
           />
           
-          <FeedbackPanel />
         </>
       )}
-    </div>
-  );
+  </div>
+);
 };
 
 export default ParsonsPuzzleIntegrated;

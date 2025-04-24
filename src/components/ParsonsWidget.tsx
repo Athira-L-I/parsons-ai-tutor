@@ -69,6 +69,9 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
     // Debug information
     console.log("All dependencies loaded");
     
+    // Remove any existing feedback panels
+    document.querySelectorAll('.parsons-feedback').forEach(el => el.remove());
+    
     // Clean up any previous instances
     if (parsonsWidget) {
       if (containerRef.current) {
@@ -95,7 +98,8 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
         feedback_cb: (feedback: any) => handleFeedback(feedback),
         lang: currentProblem.options.lang || 'en',
         trash_label: "",
-        solution_label: ""
+        solution_label: "",
+        showFeedback : false
       };
       
       console.log("Initializing ParsonsWidget with options:", options);
@@ -178,16 +182,28 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
     }
   };
   
-  // Handle checking solution
+  // Modify the checkSolution function
   const checkSolution = () => {
     if (!parsonsWidget) return;
     
     try {
+      // Remove any existing feedback elements created by this component
+      const existingFeedback = document.querySelector('.parsons-feedback');
+      if (existingFeedback) {
+        existingFeedback.remove();
+      }
+      
+      // Get feedback
       const feedback = parsonsWidget.getFeedback();
       console.log("Check solution feedback:", feedback);
+      
+      // Update application state but don't display feedback here
       if (feedback.success !== undefined) {
         setIsCorrect(feedback.success);
       }
+      
+      // Don't create a feedback element here, let FeedbackPanel handle display
+      // Just update the context state that FeedbackPanel will use
     } catch (error) {
       console.error("Error checking solution:", error);
     }

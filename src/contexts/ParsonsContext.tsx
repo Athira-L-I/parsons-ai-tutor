@@ -42,6 +42,23 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const handleFeedback = (feedback: any) => {
+    console.log("Feedback received:", feedback);
+    if (feedback.success !== undefined) {
+      setIsCorrect(feedback.success);
+      
+      // Store the feedback HTML in the context
+      if (feedback.html) {
+        setFeedback(feedback.html);
+      }
+      
+      // Add additional feedback info to context if needed
+      if (!feedback.success && feedback.errors) {
+        console.log("Errors:", feedback.errors);
+      }
+    }
+  };
+
   return (
     <ParsonsContext.Provider
       value={{
@@ -55,6 +72,7 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
         setIsCorrect,
         isLoading,
         setIsLoading,
+        handleFeedback,
       }}
     >
       {children}

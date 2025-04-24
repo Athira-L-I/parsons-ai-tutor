@@ -52,6 +52,7 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
     setAttempts(prev => prev + 1);
   };
   
+  // Simplify the structure - remove redundant components
   return (
     <div className="parsons-problem-container">
       <div className="mb-6">
@@ -82,15 +83,14 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
             </div>
           </div>
           
-          
+          {/* Load the Parsons puzzle component */}
           <ParsonsPuzzleIntegrated 
             problemId={problemId}
             title={title}
             description={description}
           />
-
           
-          
+          {/* Only include FeedbackPanel once */}
           <FeedbackPanel />
           
           {userSolution.length > 0 && (
