@@ -7,13 +7,16 @@ interface ParsonsContextType {
   userSolution: string[];
   setUserSolution: (solution: string[]) => void;
   feedback: string | null;
+  socraticFeedback: string | null;
   setFeedback: (feedback: string | null) => void;
+  setSocraticFeedback: (feedback: string | null) => void;
   isCorrect: boolean | null;
   setIsCorrect: (isCorrect: boolean | null) => void;
   isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
   attempts: number;
   incrementAttempts: () => void;
+  handleFeedback: (feedback: any) => void;
 }
 
 const defaultContext: ParsonsContextType = {
@@ -22,13 +25,16 @@ const defaultContext: ParsonsContextType = {
   userSolution: [],
   setUserSolution: () => {},
   feedback: null,
+  socraticFeedback: null,
   setFeedback: () => {},
+  setSocraticFeedback: () => {},
   isCorrect: null,
   setIsCorrect: () => {},
   isLoading: false,
   setIsLoading: () => {},
   attempts: 0,
   incrementAttempts: () => {},
+  handleFeedback: () => {},
 };
 
 const ParsonsContext = createContext<ParsonsContextType>(defaultContext);
@@ -43,6 +49,7 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
   const [currentProblem, setCurrentProblem] = useState<ParsonsSettings | null>(null);
   const [userSolution, setUserSolution] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [socraticFeedback, setSocraticFeedback] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [attempts, setAttempts] = useState<number>(0);
@@ -77,6 +84,8 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
         setUserSolution,
         feedback,
         setFeedback,
+        socraticFeedback,
+        setSocraticFeedback,
         isCorrect,
         setIsCorrect,
         isLoading,

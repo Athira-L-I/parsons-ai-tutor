@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
 import { ParsonsSettings } from '@/@types/types';
 import { isParsonsWidgetLoaded } from '@/lib/parsonsLoader';
+import * as api from '@/lib/api';
 
 // Declare the ParsonsWidget type to match the JS library
 declare global {
@@ -32,7 +33,10 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
     setUserSolution, 
     setIsCorrect, 
     isCorrect,
-    incrementAttempts // Get this from context 
+    incrementAttempts,
+    setFeedback,
+    setSocraticFeedback, // Make sure it's properly destructured from context
+    setIsLoading
   } = useParsonsContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const [parsonsWidget, setParsonsWidget] = useState<any>(null);
@@ -151,13 +155,50 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
   
   // Handle feedback from the widget
   const handleFeedback = (feedback: any) => {
-    console.log("Feedback received:", feedback);
+    console.log("Raw feedback received:", feedback);
+    
     if (feedback.success !== undefined) {
       setIsCorrect(feedback.success);
+      
+      // Extract and save the feedback content
+      if (feedback.html) {
+        // Clean up the HTML to extract the meaningful content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = feedback.html;
+        
+        // Extract text from the feedback HTML (simple version)
+        const feedbackText = tempDiv.textContent || tempDiv.innerText || '';
+        console.log("Extracted feedback text:", feedbackText);
+        
+        // Store the feedback in context
+        setFeedback(feedbackText);
+      } else if (feedback.message) {
+        // Some implementations might provide a message property
+        setFeedback(feedback.message);
+      } else {
+        // Default messages based on correctness
+        setFeedback(feedback.success 
+          ? "Your solution is correct!" 
+          : ""
+        );
+      }
       
       // Add additional feedback info to context if needed
       if (!feedback.success && feedback.errors) {
         console.log("Errors:", feedback.errors);
+        
+        // Create more specific error feedback
+        if (Array.isArray(feedback.errors)) {
+          const errorFeedback = feedback.errors.map((err: any) => {
+            if (typeof err === 'string') return err;
+            if (err.message) return err.message;
+            return JSON.stringify(err);
+          }).join('\n');
+          
+          setFeedback(prev => 
+            `${prev || ''}\n${errorFeedback}`
+          );
+        }
       }
     }
   };
@@ -192,7 +233,7 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
     }
   };
   
-  // Update checkSolution to increment attempts
+  // Update the checkSolution function to fetch Socratic feedback
   const checkSolution = () => {
     if (!parsonsWidget) return;
     
@@ -200,13 +241,48 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
       // Increment attempts
       incrementAttempts();
       
-      // Get feedback
+      // Get feedback from Parsons widget
       const feedback = parsonsWidget.getFeedback();
       console.log("Check solution feedback:", feedback);
       
       // Update application state
       if (feedback.success !== undefined) {
         setIsCorrect(feedback.success);
+        
+        // Extract and set feedback content from Parsons widget
+        if (feedback.html) {
+          setFeedback(feedback.html);
+        } else if (feedback.message) {
+          setFeedback(feedback.message);
+        }
+        
+        // If the solution is incorrect, fetch socratic feedback from API
+        if (!feedback.success) {
+          // Get the current solution
+          const solution = parsonsWidget.getModifiedCode("#ul-" + sortableId).map(line => {
+            const indentSpaces = '    '.repeat(line.indent);
+            return indentSpaces + line.code;
+          });
+          
+          // Set loading state
+          setIsLoading(true);
+          
+          // Call API directly
+          api.generateFeedback(problemId || '', solution)
+            .then(socraticFeedbackResult => {
+              console.log("Socratic feedback received:", socraticFeedbackResult);
+              setSocraticFeedback(socraticFeedbackResult);
+              setIsLoading(false);
+            })
+            .catch(error => {
+              console.error("Error fetching socratic feedback:", error);
+              setSocraticFeedback("Error fetching feedback. Please try again.");
+              setIsLoading(false);
+            });
+        } else {
+          // Clear socratic feedback when solution is correct
+          setSocraticFeedback(null);
+        }
         
         // Call the onCheckSolution callback
         if (onCheckSolution) {
@@ -215,6 +291,7 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
       }
     } catch (error) {
       console.error("Error checking solution:", error);
+      setFeedback("An error occurred while checking your solution.");
     }
   };
   
