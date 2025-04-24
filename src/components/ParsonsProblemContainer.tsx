@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
 import dynamic from 'next/dynamic';
-import SolutionChecker from './SolutionChecker';
+import SolutionCheckerIntegrated from './SolutionCheckerIntegrated';
 import FeedbackPanel from './FeedbackPanel';
 import EnhancedProblemUploader from './EnhancedProblemUploader';
 import { ParsonsSettings } from '@/@types/types';
 
-const ParsonsPuzzle = dynamic(() => {
-  const component = import('./ParsonsPuzzle');
+const ParsonsPuzzleIntegrated = dynamic(() => {
+  const component = import('./ParsonsPuzzleIntegrated');
   console.log(component); // Should log the module with ParsonsPuzzle
   return component;
 }, { ssr: false });
@@ -82,12 +82,14 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
             </div>
           </div>
           
-          <ParsonsPuzzle problemId={problemId} />
           
-          <SolutionChecker 
-            problemId={problemId} 
-            onCheckComplete={handleCheckComplete} 
+          <ParsonsPuzzleIntegrated 
+            problemId={problemId}
+            title={title}
+            description={description}
           />
+
+          
           
           <FeedbackPanel />
           

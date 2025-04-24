@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
-import { ValidationService } from '@/lib/validationService';
-import { applyPositionFeedback, applyIndentationFeedback } from '@/lib/parsonsFeedback';
+import { ValidationService } from '@/lib/validationServiceIntegrated';
+import { isParsonsWidgetLoaded } from '@/lib/parsonsLoader';
 
 interface SolutionCheckerProps {
   problemId?: string;
   onCheckComplete?: (isCorrect: boolean) => void;
 }
 
-const SolutionChecker: React.FC<SolutionCheckerProps> = ({ 
+const SolutionCheckerIntegrated: React.FC<SolutionCheckerProps> = ({ 
   problemId,
   onCheckComplete
 }) => {
@@ -35,45 +35,61 @@ const SolutionChecker: React.FC<SolutionCheckerProps> = ({
     try {
       let checkResult;
       
-      if (problemId) {
-        // Use backend validation
+      // First, try to use the Parsons widget if available
+      if (isParsonsWidgetLoaded() && currentProblem) {
+        checkResult = validationService.validateSolutionWithParsonsWidget(
+          currentProblem, 
+          userSolution
+        );
+        setIsCorrect(checkResult.isCorrect);
+        
+        if (checkResult.isCorrect) {
+          setFeedback("Great job! Your solution is correct.");
+        } else {
+          // Generate better feedback
+          if (problemId) {
+            try {
+              const feedbackText = await validationService.generateFeedback(problemId, userSolution);
+              setFeedback(feedbackText);
+            } catch (err) {
+              setFeedback(checkResult.details);
+            }
+          } else {
+            setFeedback(checkResult.details);
+          }
+        }
+      } 
+      // If Parsons widget is not loaded, try API validation
+      else if (problemId) {
         checkResult = await validationService.validateSolution(problemId, userSolution);
         setIsCorrect(checkResult.isCorrect);
         
-        // Apply visual feedback
-        if (currentProblem) {
-          const positionFeedback = applyPositionFeedback(userSolution, currentProblem.model_solution);
-          const indentFeedback = applyIndentationFeedback(userSolution, currentProblem.model_solution);
-          // Apply feedback to DOM elements...
-        }
-        
-        // Generate Socratic feedback if incorrect
-        if (!checkResult.isCorrect) {
+        if (checkResult.isCorrect) {
+          setFeedback("Great job! Your solution is correct.");
+        } else {
           const feedbackText = await validationService.generateFeedback(problemId, userSolution);
           setFeedback(feedbackText);
-        } else {
-          setFeedback("Great job! Your solution is correct.");
         }
-      } else if (currentProblem) {
-        // Use local validation
+      } 
+      // Fallback to local validation if neither API nor Parsons widget is available
+      else if (currentProblem) {
         checkResult = validationService.validateSolutionLocally(currentProblem, userSolution);
         setIsCorrect(checkResult.isCorrect);
         
-        // Generate local feedback
-        if (!checkResult.isCorrect) {
+        if (checkResult.isCorrect) {
+          setFeedback("Great job! Your solution is correct.");
+        } else {
           const feedbackText = validationService.generateLocalFeedback(currentProblem, userSolution);
           setFeedback(feedbackText);
-        } else {
-          setFeedback("Great job! Your solution is correct.");
         }
       } else {
         setFeedback("No problem is currently loaded.");
-        checkResult = { isCorrect: false };
+        checkResult = { isCorrect: false, details: "No problem loaded" };
         setIsCorrect(false);
       }
       
-      // Call the callback if provided with the correct result
-      if (onCheckComplete) {
+      // Call the callback if provided
+      if (onCheckComplete && checkResult) {
         onCheckComplete(checkResult.isCorrect);
       }
     } catch (error) {
@@ -113,4 +129,4 @@ const SolutionChecker: React.FC<SolutionCheckerProps> = ({
   );
 };
 
-export default SolutionChecker;
+export default SolutionCheckerIntegrated;

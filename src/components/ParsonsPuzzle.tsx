@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
+import $ from 'cash-dom';
 import { ParsonsSettings } from '@/@types/types';
 
 interface ParsonsPuzzleProps {
@@ -7,230 +8,226 @@ interface ParsonsPuzzleProps {
   onSolutionChange?: (blocks: string[]) => void;
 }
 
-interface CodeBlock {
-  id: string;
-  text: string;
-  indentation: number;
-  area: 'sortable' | 'trash';
-  isCorrect?: boolean;
-  isIncorrect?: boolean;
-  isCorrectIndent?: boolean;
-  isIncorrectIndent?: boolean;
-}
-
 const ParsonsPuzzle: React.FC<ParsonsPuzzleProps> = ({ 
   problemId,
   onSolutionChange 
 }) => {
-  const { currentProblem, setUserSolution, isCorrect } = useParsonsContext();
-  const [codeBlocks, setCodeBlocks] = useState<CodeBlock[]>([]);
-  const [sortableBlocks, setSortableBlocks] = useState<CodeBlock[]>([]);
-  const [trashBlocks, setTrashBlocks] = useState<CodeBlock[]>([]);
-  const [dragStartX, setDragStartX] = useState<number | null>(null);
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [isDraggingHorizontally, setIsDraggingHorizontally] = useState(false);
-  const sortableRef = useRef<HTMLDivElement>(null);
-  const trashRef = useRef<HTMLDivElement>(null);
+  const { currentProblem, setUserSolution } = useParsonsContext();
+  const puzzleRef = useRef<HTMLDivElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  // X-indent size in pixels (from the original Parsons widget)
-  const X_INDENT = currentProblem?.options.x_indent || 50;
-  
-  // Initialize blocks from the problem
+  // Initialize the Parsons puzzle when component mounts or problem changes
   useEffect(() => {
-    if (!currentProblem) return;
-    
-    const blocks = parseBlocksFromSettings(currentProblem);
-    setCodeBlocks(blocks);
-    
-    // Initialize blocks in sortable or trash area based on problem settings
-    if (currentProblem.options.trashId) {
-      setSortableBlocks([]);
-      setTrashBlocks(blocks);
-    } else {
-      setSortableBlocks(blocks);
-      setTrashBlocks([]);
+    if (typeof window === 'undefined' || !currentProblem || !puzzleRef.current) return;
+
+    // Check if we're already initialized
+    if (isInitialized) {
+      $(puzzleRef.current).empty();
     }
+
+    try {
+      // Create the Parsons puzzle elements
+      createParsonsPuzzle(puzzleRef.current, currentProblem);
+      setIsInitialized(true);
+
+      // Set up solution tracking
+      setupSolutionTracking();
+    } catch (error) {
+      console.error('Error initializing Parsons puzzle:', error);
+    }
+
+    // Cleanup function
+    return () => {
+      if (puzzleRef.current) {
+        const sortableArea = puzzleRef.current.querySelector('.sortable-code-container');
+        const trashArea = puzzleRef.current.querySelector('.sortable-trash-container');
+
+        if (sortableArea) sortableArea.remove();
+        if (trashArea) trashArea.remove();
+      }
+    };
   }, [currentProblem]);
   
-  // Update solution whenever blocks change
-  useEffect(() => {
-    updateSolution();
-  }, [sortableBlocks]);
+  // Create the Parsons puzzle UI manually
+  const createParsonsPuzzle = (container: HTMLDivElement, settings: ParsonsSettings) => {
+    if (typeof document === 'undefined') return;
+
+    const blocks = parseBlocksFromSettings(settings);
+
+    const sortableId = settings.options.sortableId || 'sortable';
+    const sortableArea = document.createElement('div');
+    sortableArea.id = sortableId;
+    sortableArea.className = 'sortable-code-container';
+    container.appendChild(sortableArea);
+
+    if (settings.options.trashId) {
+      const trashArea = document.createElement('div');
+      trashArea.id = settings.options.trashId;
+      trashArea.className = 'sortable-trash-container';
+      container.appendChild(trashArea);
+
+      blocks.forEach((block, index) => {
+        const blockElement = createBlockElement(block, index, settings.options.can_indent);
+        trashArea.appendChild(blockElement);
+      });
+    } else {
+      blocks.forEach((block, index) => {
+        const blockElement = createBlockElement(block, index, settings.options.can_indent);
+        sortableArea.appendChild(blockElement);
+      });
+    }
+
+    initializeDragAndDrop(sortableId, settings.options.trashId);
+  };
   
-  // Parse code blocks from the problem settings
-  const parseBlocksFromSettings = (settings: ParsonsSettings): CodeBlock[] => {
-    const lines = settings.initial.split('\n').filter(line => line.trim());
-    
-    return lines.map((line, index) => {
+  // Parse code blocks from the settings
+  const parseBlocksFromSettings = (settings: ParsonsSettings): string[] => {
+    const lines = settings.initial.split('\n');
+    return lines.filter(line => line.trim()).map(line => {
       // Remove distractor marker if present
-      const isDistractor = line.includes('#distractor');
-      const cleanedLine = isDistractor ? line.replace(/#distractor\s*$/, '') : line;
-      
-      return {
-        id: `block-${index}`,
-        text: cleanedLine.trim(),
-        indentation: 0,
-        area: 'trash'
-      };
+      return line.replace(/#distractor\s*$/, '');
     });
   };
   
-  // Handle drag start
-  const handleDragStart = (e: React.DragEvent, block: CodeBlock, index: number) => {
-    // Store initial horizontal position for indentation calculation
-    setDragStartX(e.clientX);
-    setDraggingIndex(index);
-    setIsDraggingHorizontally(false);
+  // Create a draggable block element
+  const createBlockElement = (code: string, index: number, canIndent?: boolean): HTMLElement => {
+    const block = document.createElement('div');
+    block.className = 'parsons-block';
+    block.setAttribute('data-index', index.toString());
+    block.draggable = true;
     
-    // Set transfer data for the drag operation
-    e.dataTransfer.setData("text/plain", block.id);
+    // Add code content
+    const codeElement = document.createElement('pre');
+    codeElement.textContent = code.trim();
+    block.appendChild(codeElement);
     
-    // Set the drag image (the element being dragged)
-    const draggedElement = e.currentTarget as HTMLElement;
-    if (draggedElement) {
-      const rect = draggedElement.getBoundingClientRect();
-      e.dataTransfer.setDragImage(draggedElement, rect.width / 2, rect.height / 2);
+    // Add indent controls if enabled
+    if (canIndent) {
+      const indentControls = document.createElement('div');
+      indentControls.className = 'indent-controls';
+      
+      const decreaseButton = document.createElement('button');
+      decreaseButton.textContent = '←';
+      decreaseButton.className = 'indent-decrease';
+      decreaseButton.onclick = () => adjustIndentation(block, -1);
+      
+      const increaseButton = document.createElement('button');
+      increaseButton.textContent = '→';
+      increaseButton.className = 'indent-increase';
+      increaseButton.onclick = () => adjustIndentation(block, 1);
+      
+      indentControls.appendChild(decreaseButton);
+      indentControls.appendChild(increaseButton);
+      block.appendChild(indentControls);
     }
+    
+    return block;
   };
   
-  // Handle drag over - detect horizontal movement for indentation
-  const handleDragOver = (e: React.DragEvent, area: 'sortable' | 'trash') => {
-    e.preventDefault();
+  // Adjust the indentation of a block
+  const adjustIndentation = (block: HTMLElement, amount: number) => {
+    const currentIndent = parseInt(block.getAttribute('data-indent') || '0', 10);
+    const newIndent = Math.max(0, currentIndent + amount);
+    block.setAttribute('data-indent', newIndent.toString());
     
-    // Only handle indentation in the sortable area when indentation is allowed
-    if (area === 'sortable' && currentProblem?.options.can_indent && 
-        dragStartX !== null && draggingIndex !== null) {
+    // Update visual indentation
+    const indentSize = 30; // pixels per indent level
+    block.style.paddingLeft = `${newIndent * indentSize}px`;
+    
+    // Update solution when indentation changes
+    updateCurrentSolution();
+  };
+  
+  // Initialize drag and drop functionality
+  const initializeDragAndDrop = (sortableId: string, trashId?: string) => {
+    const sortableArea = document.getElementById(sortableId);
+    const trashArea = trashId ? document.getElementById(trashId) : null;
+    
+    if (!sortableArea) return;
+    
+    // A very simple drag and drop implementation
+    // In a real app, you'd use a library or more robust implementation
+    
+    // Add event listeners to all blocks
+    const blocks = document.querySelectorAll('.parsons-block');
+    blocks.forEach(block => {
+      block.addEventListener('dragstart', (e) => {
+        if (!(e instanceof DragEvent) || !e.dataTransfer) return;
+        e.dataTransfer.setData('text/plain', (block as HTMLElement).getAttribute('data-index') || '');
+        setTimeout(() => {
+          (block as HTMLElement).classList.add('dragging');
+        }, 0);
+      });
       
-      const horizontalMovement = e.clientX - dragStartX;
+      block.addEventListener('dragend', () => {
+        (block as HTMLElement).classList.remove('dragging');
+        updateCurrentSolution();
+      });
+    });
+    
+    // Make areas droppable
+    [sortableArea, trashArea].filter(Boolean).forEach(area => {
+      if (!area) return;
       
-      // If horizontal movement exceeds threshold, consider it as indentation adjustment
-      if (Math.abs(horizontalMovement) > 20 && !isDraggingHorizontally) {
-        setIsDraggingHorizontally(true);
-      }
+      area.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        area.classList.add('drag-over');
+      });
       
-      if (isDraggingHorizontally) {
-        const indentChange = Math.floor(horizontalMovement / X_INDENT);
-        if (indentChange !== 0) {
-          // Update indentation of the dragged block
-          adjustIndentation(draggingIndex, indentChange);
-          // Reset drag start position to prevent continuous indentation
-          setDragStartX(e.clientX);
+      area.addEventListener('dragleave', () => {
+        area.classList.remove('drag-over');
+      });
+      
+      area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        area.classList.remove('drag-over');
+        
+        if (!(e instanceof DragEvent) || !e.dataTransfer) return;
+        
+        const blockIndex = e.dataTransfer.getData('text/plain');
+        const block = document.querySelector(`[data-index="${blockIndex}"]`);
+        
+        if (block && block.parentNode !== area) {
+          area.appendChild(block); // Only append if the block is not already in `area`
+          updateCurrentSolution();
         }
-      }
-    }
-  };
-  
-  // Adjust indentation of a block
-  const adjustIndentation = (blockIndex: number, indentChange: number) => {
-    if (!currentProblem?.options.can_indent) return;
-    
-    setSortableBlocks(blocks => {
-      return blocks.map((block, idx) => {
-        if (idx === blockIndex) {
-          // Calculate new indentation level - minimum 0
-          const newIndent = Math.max(0, block.indentation + indentChange);
-          return { ...block, indentation: newIndent };
-        }
-        return block;
       });
     });
   };
   
-  // Handle drop of a code block
-  const handleDrop = (e: React.DragEvent, targetArea: 'sortable' | 'trash') => {
-    e.preventDefault();
+  // Setup solution tracking
+  const setupSolutionTracking = () => {
+    // Set initial solution
+    setTimeout(() => {
+      updateCurrentSolution();
+    }, 100);
+  };
+  
+  // Update the current solution based on the arrangement of blocks
+  const updateCurrentSolution = () => {
+    if (!puzzleRef.current) return;
     
-    // Reset drag state
-    setDragStartX(null);
-    setDraggingIndex(null);
-    setIsDraggingHorizontally(false);
+    const sortableId = currentProblem?.options.sortableId || 'sortable';
+    const sortableArea = document.getElementById(sortableId);
     
-    const blockId = e.dataTransfer.getData("text/plain");
-    if (!blockId) return;
+    if (!sortableArea) return;
     
-    // Find the block in either area
-    const block = [...sortableBlocks, ...trashBlocks].find(b => b.id === blockId);
-    if (!block) return;
-    
-    // Handle vertical placement
-    const dropY = e.clientY;
-    const targetContainer = targetArea === 'sortable' ? sortableRef.current : trashRef.current;
-    
-    if (!targetContainer) return;
-    
-    const containerRect = targetContainer.getBoundingClientRect();
-    const containerBlocks = targetArea === 'sortable' ? sortableBlocks : trashBlocks;
-    const blockElements = targetContainer.querySelectorAll('.parsons-block');
-    
-    // Determine drop index based on Y position
-    let dropIndex = containerBlocks.length;
-    
-    for (let i = 0; i < blockElements.length; i++) {
-      const rect = blockElements[i].getBoundingClientRect();
-      const blockMiddle = rect.top + (rect.height / 2);
+    const blocks = Array.from(sortableArea.querySelectorAll('.parsons-block'));
+    const solution = blocks.map(block => {
+      const codeElement = block.querySelector('pre');
+      const code = codeElement?.textContent || '';
       
-      if (dropY < blockMiddle) {
-        dropIndex = i;
-        break;
-      }
-    }
-    
-    // Source and target areas could be different
-    const sourceArea = block.area;
-    const newBlock = { ...block, area: targetArea };
-    
-    // Remove from source
-    if (sourceArea === 'sortable') {
-      setSortableBlocks(blocks => blocks.filter(b => b.id !== blockId));
-    } else {
-      setTrashBlocks(blocks => blocks.filter(b => b.id !== blockId));
-    }
-    
-    // Add to target at the drop index
-    if (targetArea === 'sortable') {
-      setSortableBlocks(blocks => {
-        const newBlocks = [...blocks];
-        newBlocks.splice(dropIndex, 0, newBlock);
-        return newBlocks;
-      });
-    } else {
-      // Reset indentation when moving to trash
-      newBlock.indentation = 0;
-      setTrashBlocks(blocks => {
-        const newBlocks = [...blocks];
-        newBlocks.splice(dropIndex, 0, newBlock);
-        return newBlocks;
-      });
-    }
-    
-    // Log movement for context
-    if (sourceArea !== targetArea) {
-      console.log(`Moved block from ${sourceArea} to ${targetArea}`);
-    } else {
-      console.log(`Reordered block within ${targetArea}`);
-    }
-  };
-  
-  // Handle drag end
-  const handleDragEnd = () => {
-    // Reset all drag state
-    setDragStartX(null);
-    setDraggingIndex(null);
-    setIsDraggingHorizontally(false);
-    
-    // Update solution after drag operation completes
-    updateSolution();
-  };
-  
-  // Update solution based on current block arrangement
-  const updateSolution = () => {
-    const solution = sortableBlocks.map(block => {
-      const indentSpaces = '    '.repeat(block.indentation);
-      return `${indentSpaces}${block.text}`;
+      // Get indentation
+      const indentLevel = parseInt((block as HTMLElement).getAttribute('data-indent') || '0', 10);
+      
+      // Return indented code
+      return '    '.repeat(indentLevel) + code.trim();
     });
     
+    // Update the solution in context
     setUserSolution(solution);
     
+    // Call the callback if provided
     if (onSolutionChange) {
       onSolutionChange(solution);
     }
@@ -239,94 +236,81 @@ const ParsonsPuzzle: React.FC<ParsonsPuzzleProps> = ({
   return (
     <div className="parsons-puzzle-container">
       <div className="flex flex-col md:flex-row gap-4">
-        {/* Trash area */}
         {currentProblem?.options.trashId && (
-          <div 
-            className={`border-2 p-4 rounded-md min-h-64 w-full md:w-4/12 ${
-              isCorrect === false ? 'border-red-300' : 'border-gray-300'
-            }`}
-          >
+          <div className="border-2 p-4 rounded-md min-h-64 w-full md:w-1/3 border-gray-300">
             <h3 className="text-lg font-semibold mb-2">Available Blocks</h3>
-            <div 
-              ref={trashRef}
-              className="parsons-area min-h-32 p-2 w-full bg-gray-50"
-              onDragOver={(e) => handleDragOver(e, 'trash')}
-              onDrop={(e) => handleDrop(e, 'trash')}
-            >
-              {trashBlocks.map((block, index) => (
-                <div
-                  key={block.id}
-                  id={block.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, block, index)}
-                  onDragEnd={handleDragEnd}
-                  className="parsons-block bg-white border border-gray-200 rounded-lg p-3 mb-2 cursor-move"
-                >
-                  <pre className="font-mono text-sm m-0">{block.text}</pre>
-                </div>
-              ))}
-              {trashBlocks.length === 0 && (
-                <div className="text-gray-400 text-center p-4">
-                  All blocks are in use
-                </div>
-              )}
-            </div>
+            {/* Trash area will be populated by the puzzle initialization */}
           </div>
         )}
         
-        {/* Sortable area */}
-        <div 
-          className={`flex-1 border-2 p-4 rounded-md min-h-64 ${
-            isCorrect === true ? 'border-green-300' : 
-            isCorrect === false ? 'border-red-300' : 'border-gray-300'
-          }`}
-        >
+        <div className="border-2 p-4 rounded-md min-h-64 flex-1 border-gray-300">
           <h3 className="text-lg font-semibold mb-2">Your Solution</h3>
           <div 
-            ref={sortableRef}
-            className={`parsons-area min-h-32 p-2 ${
-              isCorrect === true ? 'bg-green-50' : 
-              isCorrect === false ? 'bg-red-50' : 'bg-blue-50'
-            }`}
-            onDragOver={(e) => handleDragOver(e, 'sortable')}
-            onDrop={(e) => handleDrop(e, 'sortable')}
+            ref={puzzleRef} 
+            className="parsons-puzzle"
           >
-            {sortableBlocks.map((block, index) => (
-              <div
-                key={block.id}
-                id={block.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, block, index)}
-                onDragEnd={handleDragEnd}
-                className={`parsons-block bg-white border rounded-lg p-3 mb-2 cursor-move ${
-                  // Add feedback classes based on block state
-                  block.isCorrect ? 'bg-green-100 border-green-500' :
-                  block.isIncorrect ? 'bg-red-100 border-red-500' :
-                  block.isIncorrectIndent ? 'border-l-4 border-l-red-500' :
-                  block.isCorrectIndent ? 'border-l-4 border-l-green-500' : ''
-                }`}
-                style={{ 
-                  marginLeft: `${block.indentation * (X_INDENT / 16)}rem` 
-                }}
-              >
-                <pre className="font-mono text-sm m-0">{block.text}</pre>
+            {/* Puzzle will be initialized here */}
+            {!isInitialized && currentProblem && (
+              <div className="text-center py-4 text-gray-500">
+                Initializing puzzle...
               </div>
-            ))}
-            {sortableBlocks.length === 0 && (
-              <div className="text-gray-400 text-center p-4 border-2 border-dashed rounded">
-                Drag code blocks here to build your solution
+            )}
+            
+            {!currentProblem && (
+              <div className="text-center py-4 text-gray-500">
+                No problem loaded. Please select a problem.
               </div>
             )}
           </div>
         </div>
       </div>
       
-      {/* Add a hint about horizontal dragging */}
-      {currentProblem?.options.can_indent && sortableBlocks.length > 0 && (
-        <div className="mt-2 text-sm text-gray-500 italic">
-          Tip: Drag blocks horizontally to adjust indentation
-        </div>
-      )}
+      <style jsx>{`
+        .parsons-block {
+          margin: 8px 0;
+          padding: 8px;
+          background: white;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          cursor: move;
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        
+        .parsons-block.dragging {
+          opacity: 0.5;
+        }
+        
+        .parsons-block pre {
+          margin: 0;
+          font-family: monospace;
+          flex-grow: 1;
+        }
+        
+        .indent-controls {
+          display: flex;
+          margin-right: 10px;
+        }
+        
+        .indent-controls button {
+          padding: 2px 6px;
+          font-size: 12px;
+          background: #eee;
+          border: 1px solid #ccc;
+          margin: 0 2px;
+          cursor: pointer;
+        }
+        
+        .sortable-code-container, .sortable-trash-container {
+          min-height: 50px;
+          padding: 10px;
+        }
+        
+        .drag-over {
+          background-color: rgba(59, 130, 246, 0.1);
+        }
+      `}</style>
     </div>
   );
 };
