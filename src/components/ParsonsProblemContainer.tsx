@@ -92,8 +92,7 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
             description={description}
             onCheckSolution={handleCheckComplete}
           />
-          
-          {/* Only include FeedbackPanel once */}
+
           <FeedbackPanel />
           
           {userSolution.length > 0 && (

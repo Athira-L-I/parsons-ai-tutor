@@ -3,9 +3,11 @@ import { NextPage } from 'next';
 import Link from 'next/link';
 import ParsonsProblemContainer from '@/components/ParsonsProblemContainer';
 import { ParsonsGrader } from '@/@types/types';
+import { useParsonsContext } from '@/contexts/ParsonsContext';
+import * as api from '@/lib/api';
 
 /**
- * Sample initial problem for demo purposes
+ * Sample initial problem for demo purposes as a fallback
  */
 const sampleProblem = {
   initial: 'def find_max(numbers):\n    if not numbers:\n        return None\n    max_value = numbers[0]\n    for num in numbers:\n        if num > max_value:\n            max_value = num\n    return max_value\n# This is a dummy calculation #distractor\nmax_value = 0 #distractor\nreturn max_value + 1 #distractor',
@@ -23,6 +25,50 @@ const sampleProblem = {
 const HomePage: NextPage = () => {
   const [showDemo, setShowDemo] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [demoProblem, setDemoProblem] = useState<any>(null);
+  const { setCurrentProblem, clearFeedback } = useParsonsContext();
+  
+  const handleTryDemo = async () => {
+    setIsLoading(true);
+    setShowDemo(true);
+    setShowCreate(false);
+    
+    // Clear any existing feedback
+    if (clearFeedback) {
+      clearFeedback();
+    }
+    
+    try {
+      // Fetch the demo problem with a fixed ID
+      const demoProblemData = await api.fetchProblemById('demo-problem-1');
+      setDemoProblem(demoProblemData);
+      setCurrentProblem(demoProblemData.parsonsSettings);
+    } catch (error) {
+      console.error('Failed to load demo problem:', error);
+      // Fallback to the sample problem if the API call fails
+      setDemoProblem({
+        id: 'demo-problem-local',
+        title: 'Local Demo: Find Maximum Value',
+        description: 'Arrange the code blocks to create a function that finds the maximum value in a list of numbers.',
+        parsonsSettings: sampleProblem
+      });
+      setCurrentProblem(sampleProblem);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleCreateProblem = () => {
+    setShowCreate(true);
+    setShowDemo(false);
+    
+    // Clear any existing feedback and problem
+    if (clearFeedback) {
+      clearFeedback();
+    }
+    setCurrentProblem(null);
+  };
   
   return (
     <div className="space-y-8">
@@ -34,19 +80,14 @@ const HomePage: NextPage = () => {
         </p>
         <div className="mt-8 flex justify-center space-x-4">
           <button 
-            onClick={() => {
-              setShowDemo(true);
-              setShowCreate(false);
-            }}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            onClick={handleTryDemo}
+            disabled={isLoading}
+            className={`px-6 py-3 ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md font-medium`}
           >
-            Try Demo
+            {isLoading ? 'Loading Demo...' : 'Try Demo'}
           </button>
           <button
-            onClick={() => {
-              setShowCreate(true);
-              setShowDemo(false);
-            }}
+            onClick={handleCreateProblem}
             className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
           >
             Create Problem
@@ -57,12 +98,19 @@ const HomePage: NextPage = () => {
       {/* Demo or Create section */}
       {(showDemo || showCreate) && (
         <section className="bg-white border rounded-lg shadow-sm p-6 max-w-5xl mx-auto">
-          {showDemo && (
+          {showDemo && demoProblem && (
             <ParsonsProblemContainer
-              title="Demo: Find Maximum Value"
-              description="Arrange the code blocks to create a function that finds the maximum value in a list of numbers."
-              initialProblem={sampleProblem}
+              problemId={demoProblem.id}
+              title={demoProblem.title}
+              description={demoProblem.description}
+              initialProblem={demoProblem.parsonsSettings}
             />
+          )}
+          
+          {showDemo && isLoading && (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
           )}
           
           {showCreate && (

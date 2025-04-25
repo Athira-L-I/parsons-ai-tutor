@@ -9,7 +9,7 @@ interface ParsonsContextType {
   feedback: string | null;
   socraticFeedback: string | null;
   setFeedback: (feedback: string | null) => void;
-  setSocraticFeedback: (feedback: string | null) => void;
+  setSocraticFeedback: (socraticFeedback: string | null) => void;
   isCorrect: boolean | null;
   setIsCorrect: (isCorrect: boolean | null) => void;
   isLoading: boolean;
