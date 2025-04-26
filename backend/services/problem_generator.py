@@ -39,7 +39,7 @@ def generate_parsons_problem(source_code: str) -> Dict[str, Any]:
         code_blocks.append('\n'.join(current_block))
     
     # Generate distractor lines (incorrect options)
-    distractors = generate_distractors(code_blocks)
+    distractors = [] # generate_distractors(code_blocks)
     
     # Combine regular blocks and distractor blocks for the initial field
     initial_code = '\n'.join(code_blocks)

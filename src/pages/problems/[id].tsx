@@ -3,8 +3,7 @@ import { useRouter } from 'next/router';
 import { NextPage } from 'next';
 import { fetchProblemById, checkSolution, generateFeedback } from '@/lib/api';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
-import ParsonsBoard from '@/components/ParsonsBoard';
-import FeedbackPanel from '@/components/FeedbackPanel';
+import ParsonsProblemContainer from '@/components/ParsonsProblemContainer'; 
 
 const ProblemPage: NextPage = () => {
   const router = useRouter();
@@ -78,20 +77,11 @@ const ProblemPage: NextPage = () => {
       
       {currentProblem ? (
         <>
-          <ParsonsBoard />
-          
+        <div className="mb-6 p-4 bg-white rounded-md border">
+          <ParsonsProblemContainer />
+        </div>  
           <div className="mt-6 flex gap-4">
-            <button
-              onClick={handleCheckSolution}
-              disabled={isLoading || !userSolution.length}
-              className={`px-6 py-2 rounded-md text-white font-medium ${
-                isLoading || !userSolution.length 
-                  ? 'bg-blue-300 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {isLoading ? 'Checking...' : 'Check Solution'}
-            </button>
+            
             
             <button
               onClick={() => router.back()}
@@ -101,7 +91,7 @@ const ProblemPage: NextPage = () => {
             </button>
           </div>
           
-          <FeedbackPanel />
+          
         </>
       ) : (
         <div className="flex justify-center items-center h-64">

@@ -26,8 +26,8 @@ interface ParsonsProblemContainerProps {
 const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
   problemId,
   initialProblem,
-  title = 'Parsons Problem',
-  description = 'Rearrange the code blocks below to form a correct solution.',
+  title = '',
+  description = '',
   showUploader = false
 }) => {
   const { 
@@ -67,7 +67,8 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
       {showUploader && !currentProblem && (
         <EnhancedProblemUploader />
       )}
-      
+
+            
       {currentProblem && (
         <>
           <div className="mb-4">

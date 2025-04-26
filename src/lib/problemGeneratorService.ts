@@ -50,7 +50,7 @@ export class ProblemGeneratorService {
     });
     
     // Generate distractor lines (simplified version)
-    const distractors = this.generateSimpleDistractors(codeLines);
+    const distractors = [] // this.generateSimpleDistractors(codeLines);
     
     // Create the combined code with distractors
     const combinedCode = [
