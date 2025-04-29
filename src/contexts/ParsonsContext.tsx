@@ -17,6 +17,7 @@ interface ParsonsContextType {
   attempts: number;
   incrementAttempts: () => void;
   handleFeedback: (feedback: any) => void;
+  resetContext: () => void; // New reset function
 }
 
 const defaultContext: ParsonsContextType = {
@@ -35,6 +36,7 @@ const defaultContext: ParsonsContextType = {
   attempts: 0,
   incrementAttempts: () => {},
   handleFeedback: () => {},
+  resetContext: () => {}, // New reset function
 };
 
 const ParsonsContext = createContext<ParsonsContextType>(defaultContext);
@@ -56,6 +58,17 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
 
   const incrementAttempts = useCallback(() => {
     setAttempts(prev => prev + 1);
+  }, []);
+
+  // New reset function to clear all state values
+  const resetContext = useCallback(() => {
+    setCurrentProblem(null);
+    setUserSolution([]);
+    setFeedback(null);
+    setSocraticFeedback(null);
+    setIsCorrect(null);
+    setIsLoading(false);
+    setAttempts(0);
   }, []);
 
   const handleFeedback = (feedback: any) => {
@@ -93,6 +106,7 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
         attempts,
         incrementAttempts,
         handleFeedback,
+        resetContext, // Include the new reset function
       }}
     >
       {children}

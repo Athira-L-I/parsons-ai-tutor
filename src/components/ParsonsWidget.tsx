@@ -35,13 +35,18 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
     isCorrect,
     incrementAttempts,
     setFeedback,
-    setSocraticFeedback, // Make sure it's properly destructured from context
+    setSocraticFeedback,
     setIsLoading
   } = useParsonsContext();
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const [parsonsWidget, setParsonsWidget] = useState<any>(null);
   const sortableId = 'parsons-sortable';
   const trashId = 'parsons-trash';
+  
+  // Track the current problem to detect changes
+  const [lastProblemId, setLastProblemId] = useState<string | undefined>(problemId);
+  const lastProblemRef = useRef<ParsonsSettings | null>(null);
   
   // Check if all dependencies are properly loaded
   const isDependenciesLoaded = () => {
@@ -52,47 +57,93 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
            typeof window.LIS !== 'undefined';
   };
   
-  // Initialize the widget when the component mounts
+  // Initialize the widget when the component mounts or problem changes
   useEffect(() => {
     if (!currentProblem) return;
     
-    // Ensure all dependencies are loaded
-    if (!isDependenciesLoaded()) {
-      console.log("Waiting for dependencies to load...");
-      const checkInterval = setInterval(() => {
-        if (isDependenciesLoaded()) {
-          clearInterval(checkInterval);
-          initializeWidget();
-        }
-      }, 100);
-      
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        console.error("Dependencies failed to load in time");
-      }, 5000);
-      
-      return () => clearInterval(checkInterval);
-    } else {
-      initializeWidget();
+    // Check if the problem has changed - by comparing reference or ID
+    const problemChanged = lastProblemRef.current !== currentProblem || 
+                           (problemId && problemId !== lastProblemId);
+    
+    // Update tracking refs
+    lastProblemRef.current = currentProblem;
+    if (problemId) {
+      setLastProblemId(problemId);
     }
-  }, [currentProblem]);
+    
+    // Only reinitialize if the problem changed or no widget exists
+    if (!parsonsWidget || problemChanged) {
+      // Clean up existing widget
+      if (parsonsWidget) {
+        // Clean up the widget (remove DOM elements, event listeners)
+        cleanupWidget();
+      }
+      
+      // Ensure all dependencies are loaded
+      if (!isDependenciesLoaded()) {
+        console.log("Waiting for dependencies to load...");
+        const checkInterval = setInterval(() => {
+          if (isDependenciesLoaded()) {
+            clearInterval(checkInterval);
+            initializeWidget();
+          }
+        }, 100);
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          console.error("Dependencies failed to load in time");
+        }, 5000);
+        
+        return () => clearInterval(checkInterval);
+      } else {
+        initializeWidget();
+      }
+    }
+  }, [currentProblem, problemId]);
+  
+  // Cleanup function for the widget
+  const cleanupWidget = () => {
+    if (!parsonsWidget) return;
+    
+    try {
+      // Remove any existing feedback panels
+      document.querySelectorAll('.parsons-feedback').forEach(el => el.remove());
+      
+      // Clean up any jQuery UI sortable instances
+      if (window.jQuery) {
+        try {
+          window.jQuery(`#ul-${sortableId}`).sortable('destroy');
+          window.jQuery(`#ul-${trashId}`).sortable('destroy');
+        } catch (e) {
+          console.log('Error cleaning up sortable:', e);
+        }
+      }
+      
+      // Clear the container
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+      
+      // Reset the widget state
+      setParsonsWidget(null);
+    } catch (error) {
+      console.error("Error cleaning up widget:", error);
+    }
+  };
   
   // Separate function to initialize the widget
   const initializeWidget = () => {
     // Debug information
-    console.log("All dependencies loaded");
+    console.log("All dependencies loaded, initializing widget");
     
     // Remove any existing feedback panels
     document.querySelectorAll('.parsons-feedback').forEach(el => el.remove());
     
     // Clean up any previous instances
-    if (parsonsWidget) {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
     }
-    
     
     if (containerRef.current) {
       containerRef.current.innerHTML = `
@@ -113,7 +164,7 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
         lang: currentProblem.options.lang || 'en',
         trash_label: "",
         solution_label: "",
-        showFeedback : false
+        showFeedback: false
       };
       
       console.log("Initializing ParsonsWidget with options:", options);
@@ -298,20 +349,7 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (containerRef.current) {
-        // Remove any observers or event listeners
-        const sortableElement = document.getElementById(sortableId);
-        if (sortableElement) {
-          // Cleanup any jQuery UI sortable instances
-          try {
-            if (window.jQuery && window.jQuery(sortableElement).sortable) {
-              window.jQuery(sortableElement).sortable('destroy');
-            }
-          } catch (e) {
-            console.error('Error cleaning up sortable:', e);
-          }
-        }
-      }
+      cleanupWidget();
     };
   }, []);
   

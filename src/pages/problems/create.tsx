@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NextPage } from 'next';
 import { useParsonsContext } from '@/contexts/ParsonsContext';
 import ParsonsProblemContainer from '@/components/ParsonsProblemContainer'; 
 import EnhancedProblemUploader from '@/components/EnhancedProblemUploader';
 
 const CreateProblemPage: NextPage = () => {
-  const { currentProblem, userSolution, setFeedback, setIsCorrect, isLoading, setIsLoading } = useParsonsContext();
+  const { currentProblem, resetContext } = useParsonsContext();
   
+  // Reset context when the component mounts
+  useEffect(() => {
+    resetContext();
+  }, [resetContext]);
    
   return (
     <div>
@@ -30,7 +34,6 @@ const CreateProblemPage: NextPage = () => {
           <div className="mb-6 p-4 bg-white rounded-md border">
             <ParsonsProblemContainer />
           </div>
-          
         </div>
       )}
     </div>

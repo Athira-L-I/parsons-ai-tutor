@@ -16,15 +16,24 @@ const ProblemPage: NextPage = () => {
     setIsCorrect, 
     isCorrect, 
     isLoading, 
-    setIsLoading 
+    setIsLoading,
+    resetContext
   } = useParsonsContext();
   
   const [title, setTitle] = useState('Loading problem...');
   const [description, setDescription] = useState('');
   
+  // Track the current problem ID to detect changes
+  const [currentProblemId, setCurrentProblemId] = useState<string | null>(null);
+  
   useEffect(() => {
-    if (id && typeof id === 'string') {
+    // Only fetch if we have an ID and it's different from the current one
+    if (id && typeof id === 'string' && id !== currentProblemId) {
       const loadProblem = async () => {
+        // Reset context when loading a new problem
+        resetContext();
+        setCurrentProblemId(id);
+        
         try {
           const data = await fetchProblemById(id);
           setCurrentProblem(data.parsonsSettings);
@@ -37,7 +46,7 @@ const ProblemPage: NextPage = () => {
       
       loadProblem();
     }
-  }, [id, setCurrentProblem]);
+  }, [id, setCurrentProblem, resetContext, currentProblemId]);
   
   const handleCheckSolution = async () => {
     if (!id || !userSolution.length) return;
@@ -78,11 +87,11 @@ const ProblemPage: NextPage = () => {
       {currentProblem ? (
         <>
         <div className="mb-6 p-4 bg-white rounded-md border">
-          <ParsonsProblemContainer />
+          <ParsonsProblemContainer 
+            problemId={typeof id === 'string' ? id : undefined}
+          />
         </div>  
           <div className="mt-6 flex gap-4">
-            
-            
             <button
               onClick={() => router.back()}
               className="px-6 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
@@ -90,8 +99,6 @@ const ProblemPage: NextPage = () => {
               Back to Problems
             </button>
           </div>
-          
-          
         </>
       ) : (
         <div className="flex justify-center items-center h-64">

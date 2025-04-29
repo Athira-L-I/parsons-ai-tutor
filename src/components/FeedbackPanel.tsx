@@ -3,7 +3,13 @@ import { useParsonsContext } from '@/contexts/ParsonsContext';
 
 const FeedbackPanel: React.FC = () => {
   // Use both feedback types from context
-  const { feedback, socraticFeedback, isCorrect, isLoading } = useParsonsContext();
+  const { 
+    feedback, 
+    socraticFeedback, 
+    isCorrect, 
+    isLoading,
+    currentProblem  // Add this to track problem changes
+  } = useParsonsContext();
 
   // Add debug logging
   useEffect(() => {
@@ -11,19 +17,19 @@ const FeedbackPanel: React.FC = () => {
       feedback: feedback ? "present" : "null", 
       socraticFeedback: socraticFeedback ? "present" : "null",
       isCorrect, 
-      isLoading 
+      isLoading,
+      currentProblem: currentProblem ? "loaded" : "null"
     });
-  }, [feedback, socraticFeedback, isCorrect, isLoading]);
+  }, [feedback, socraticFeedback, isCorrect, isLoading, currentProblem]);
+
+  // If there's no problem loaded, don't show feedback
+  if (!currentProblem) {
+    return null;
+  }
 
   return (
     <div className="mt-6 p-4 border rounded-md">
       <h3 className="text-lg font-semibold mb-2">Feedback</h3>
-      
-      {/* Optional: Add debug info */}
-      <div className="text-xs text-gray-400 mb-2">
-        Debug: feedback={feedback ? "yes" : "no"}, 
-        socraticFeedback={socraticFeedback ? "yes" : "no"}
-      </div>
       
       {isLoading ? (
         <div className="flex justify-center items-center h-24">

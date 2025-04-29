@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { fetchProblems } from '@/lib/api';
+import { useParsonsContext } from '@/contexts/ParsonsContext';
 
 interface Problem {
   id: string;
@@ -15,8 +16,12 @@ const ProblemsPage: NextPage = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const { resetContext } = useParsonsContext();
   
   useEffect(() => {
+    // Reset context when the page loads
+    resetContext();
+    
     const loadProblems = async () => {
       try {
         const data = await fetchProblems();
@@ -29,7 +34,7 @@ const ProblemsPage: NextPage = () => {
     };
     
     loadProblems();
-  }, []);
+  }, [resetContext]);
   
   const filteredProblems = filter === 'all' 
     ? problems 

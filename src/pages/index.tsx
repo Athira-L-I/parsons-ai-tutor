@@ -10,7 +10,7 @@ import * as api from '@/lib/api';
  * Sample initial problem for demo purposes as a fallback
  */
 const sampleProblem = {
-  initial: 'def find_max(numbers):\n    if not numbers:\n        return None\n    max_value = numbers[0]\n    for num in numbers:\n        if num > max_value:\n            max_value = num\n    return max_value\n# This is a dummy calculation #distractor\nmax_value = 0 #distractor\nreturn max_value + 1 #distractor',
+  initial: "start = 1, end = 10\nfor i in range(start, end + 1):\n    if i % 2 == 0:\n        print(i)",
   options: {
     sortableId: 'sortable',
     trashId: 'sortableTrash',
@@ -27,17 +27,17 @@ const HomePage: NextPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [demoProblem, setDemoProblem] = useState<any>(null);
-  const { setCurrentProblem, clearFeedback } = useParsonsContext();
+  
+  // Get the resetContext function from context
+  const { setCurrentProblem, resetContext } = useParsonsContext();
   
   const handleTryDemo = async () => {
+    // Reset context before loading a new problem
+    resetContext();
+    
     setIsLoading(true);
     setShowDemo(true);
     setShowCreate(false);
-    
-    // Clear any existing feedback
-    if (clearFeedback) {
-      clearFeedback();
-    }
     
     try {
       // Fetch the demo problem with a fixed ID
@@ -49,8 +49,8 @@ const HomePage: NextPage = () => {
       // Fallback to the sample problem if the API call fails
       setDemoProblem({
         id: 'demo-problem-local',
-        title: 'Local Demo: Find Maximum Value',
-        description: 'Arrange the code blocks to create a function that finds the maximum value in a list of numbers.',
+        title: 'Local Demo: Print Even Numbers in a Range',
+        description: 'Write code that prints all even numbers from a given start to end value using a for loop and conditional check.',
         parsonsSettings: sampleProblem
       });
       setCurrentProblem(sampleProblem);
@@ -60,14 +60,11 @@ const HomePage: NextPage = () => {
   };
   
   const handleCreateProblem = () => {
+    // Reset context before showing the create problem view
+    resetContext();
+    
     setShowCreate(true);
     setShowDemo(false);
-    
-    // Clear any existing feedback and problem
-    if (clearFeedback) {
-      clearFeedback();
-    }
-    setCurrentProblem(null);
   };
   
   return (

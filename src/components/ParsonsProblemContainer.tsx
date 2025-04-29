@@ -36,25 +36,32 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
     userSolution, 
     isCorrect, 
     feedback,
-    attempts // Get attempts from context
+    attempts,
+    resetContext
   } = useParsonsContext();
   
-  // Remove local attempts state - we're using context now
+  // Track the current problem ID to detect changes
+  const [lastProblemId, setLastProblemId] = useState<string | undefined>(problemId);
   
   // Initialize with the provided problem if available
   useEffect(() => {
-    if (initialProblem && !currentProblem) {
+    // Only set the problem if it's different from the current one
+    if (initialProblem && (!currentProblem || initialProblem !== currentProblem)) {
       setCurrentProblem(initialProblem);
     }
-  }, [initialProblem, currentProblem, setCurrentProblem]);
+    
+    // If the problemId changes, we should reset context
+    if (problemId !== lastProblemId) {
+      resetContext();
+      setLastProblemId(problemId);
+    }
+  }, [initialProblem, currentProblem, setCurrentProblem, problemId, lastProblemId, resetContext]);
   
   // Handle completion of the check (you can keep this for other side effects)
   const handleCheckComplete = (isCorrect: boolean) => {
-    // Don't need to increment attempts here anymore
     console.log("Solution checked, is correct:", isCorrect);
   };
   
-  // Use attempts from context in your rendering
   return (
     <div className="parsons-problem-container">
       <div className="mb-6">
@@ -67,8 +74,7 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
       {showUploader && !currentProblem && (
         <EnhancedProblemUploader />
       )}
-
-            
+      
       {currentProblem && (
         <>
           <div className="mb-4">
