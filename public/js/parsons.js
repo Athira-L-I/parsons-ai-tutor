@@ -1255,7 +1255,7 @@
        return { feedback: fb.html, success: fb.success };
      } else {
        this.addLogEntry({type: "feedback", errors: fb.log_errors, success: fb.success});
-       return fb.errors;
+       return { feedback: fb.errors, success: fb.success };
      }
    };
 

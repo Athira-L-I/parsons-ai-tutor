@@ -1,6 +1,17 @@
 import os
 import openai
+from dotenv import load_dotenv
+from pathlib import Path
 from typing import Dict, List, Any
+
+# Get the current file's directory
+current_dir = Path(__file__).parent
+
+# Construct the relative path to .env.local
+dotenv_path = current_dir.parent.parent / ".env.local"
+
+# Load the .env.local file
+load_dotenv(dotenv_path=dotenv_path)
 
 # Configure OpenAI API
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -54,8 +65,9 @@ def generate_feedback(problem_settings: Dict[str, Any], user_solution: List[str]
         """
         
         # Call the OpenAI API
-        response = openai.ChatCompletion.create(
-            model="gpt-4",  # Can be configured based on needs
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Can be configured based on needs
             messages=[
                 {"role": "system", "content": "You are a helpful programming tutor using the Socratic method."},
                 {"role": "user", "content": prompt}
