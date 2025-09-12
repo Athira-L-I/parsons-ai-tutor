@@ -29,12 +29,10 @@ const HomePage: NextPage = () => {
   const [demoProblem, setDemoProblem] = useState<any>(null);
   
   // Get the resetContext function from context
-  const { setCurrentProblem, resetContext } = useParsonsContext();
+  const { setCurrentProblem, resetContext, setProblemId } = useParsonsContext();
   
   const handleTryDemo = async () => {
     // Reset context before loading a new problem
-    resetContext();
-    
     setIsLoading(true);
     setShowDemo(true);
     setShowCreate(false);
@@ -44,16 +42,20 @@ const HomePage: NextPage = () => {
       const demoProblemData = await api.fetchProblemById('demo-problem-1');
       setDemoProblem(demoProblemData);
       setCurrentProblem(demoProblemData.parsonsSettings);
+      // Set the problem ID to trigger the context reset
+      setProblemId(demoProblemData.id);
     } catch (error) {
       console.error('Failed to load demo problem:', error);
       // Fallback to the sample problem if the API call fails
+      const localDemoId = 'demo-problem-local';
       setDemoProblem({
-        id: 'demo-problem-local',
+        id: localDemoId,
         title: 'Local Demo: Print Even Numbers in a Range',
         description: 'Write code that prints all even numbers from a given start to end value using a for loop and conditional check.',
         parsonsSettings: sampleProblem
       });
       setCurrentProblem(sampleProblem);
+      setProblemId(localDemoId);
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +63,7 @@ const HomePage: NextPage = () => {
   
   const handleCreateProblem = () => {
     // Reset context before showing the create problem view
-    resetContext();
+    setProblemId('home-create');
     
     setShowCreate(true);
     setShowDemo(false);

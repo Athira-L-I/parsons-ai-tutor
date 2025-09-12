@@ -16,11 +16,11 @@ const ProblemsPage: NextPage = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const { resetContext } = useParsonsContext();
+  const { resetContext, setProblemId } = useParsonsContext();
   
   useEffect(() => {
-    // Reset context when the page loads
-    resetContext();
+    // Reset context when the page loads and set problemId
+    setProblemId("problems-list");
     
     const loadProblems = async () => {
       try {
