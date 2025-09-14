@@ -85,6 +85,7 @@ export const ParsonsProvider = ({ children, problemId: initialProblemId }: Parso
     // Only reset if problemId has changed and is not the first render
     if (previousProblemIdRef.current !== undefined && 
         problemId !== previousProblemIdRef.current) {
+      console.log(`[ParsonsContext] ProblemId changed from ${previousProblemIdRef.current} to ${problemId}, resetting context`);
       resetContext();
     }
     
