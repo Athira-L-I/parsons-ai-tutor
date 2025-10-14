@@ -1,5 +1,16 @@
 from pydantic import BaseModel
-from typing import List, Dict, Optional, Union, Any
+from typing import List, Dict, Any, Optional
+
+class SessionSnapshot(BaseModel):
+    sessionId: str
+    studentId: str
+    problemId: str
+    schoolId: str
+    startTime: int
+    endTime: int
+    events: List[Dict[str, Any]]
+    features: Dict[str, Any]
+    stateHistory: Dict[str, int]
 
 class ParsonsOptions(BaseModel):
     sortableId: Optional[str] = None

@@ -5,12 +5,12 @@ import ParsonsProblemContainer from '@/components/ParsonsProblemContainer';
 import EnhancedProblemUploader from '@/components/EnhancedProblemUploader';
 
 const CreateProblemPage: NextPage = () => {
-  const { currentProblem, resetContext } = useParsonsContext();
+  const { currentProblem, resetContext, setProblemId } = useParsonsContext();
   
-  // Reset context when the component mounts
+  // Reset context when the component mounts and set problemId
   useEffect(() => {
-    resetContext();
-  }, [resetContext]);
+    setProblemId("create");
+  }, [setProblemId]);
    
   return (
     <div>
@@ -32,7 +32,7 @@ const CreateProblemPage: NextPage = () => {
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Preview Your Problem</h2>
           <div className="mb-6 p-4 bg-white rounded-md border">
-            <ParsonsProblemContainer />
+            <ParsonsProblemContainer problemId="create" />
           </div>
         </div>
       )}

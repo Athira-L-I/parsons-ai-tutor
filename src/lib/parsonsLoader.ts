@@ -20,7 +20,7 @@ const dependencies = [
   // LIS module for Longest Increasing Subsequence algorithm
   '/js/lis.js',
   // Parsons widget itself
-  '/js/parsons.js'
+  '/js/parsons.js',
 ];
 
 /**
@@ -57,35 +57,37 @@ export function loadParsonsWidget(): Promise<boolean> {
   if (isLoading && loadPromise) {
     return loadPromise;
   }
-  
+
   // Return resolved promise if already loaded
   if (isLoaded) {
     return Promise.resolve(true);
   }
-  
+
   isLoading = true;
-  
+
   // Load CSS before loading scripts
-  return loadCSS('https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css')
-    .then(() => {
-      // Load dependencies one after another
-      loadPromise = dependencies.reduce(
+  return loadCSS(
+    'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css'
+  ).then(() => {
+    // Load dependencies one after another
+    loadPromise = dependencies
+      .reduce(
         (promise, script) => promise.then(() => loadScript(script)),
         Promise.resolve()
       )
-        .then(() => {
-          isLoaded = true;
-          isLoading = false;
-          return true;
-        })
-        .catch((error) => {
-          console.error('Error loading Parsons widget dependencies:', error);
-          isLoading = false;
-          return false;
-        });
-      
-      return loadPromise;
-    });
+      .then(() => {
+        isLoaded = true;
+        isLoading = false;
+        return true;
+      })
+      .catch((error) => {
+        console.error('Error loading Parsons widget dependencies:', error);
+        isLoading = false;
+        return false;
+      });
+
+    return loadPromise;
+  });
 }
 
 /**

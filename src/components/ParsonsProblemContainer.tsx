@@ -37,7 +37,8 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
     isCorrect, 
     feedback,
     attempts,
-    resetContext
+    resetContext,
+    setProblemId
   } = useParsonsContext();
   
   // Track the current problem ID to detect changes
@@ -50,9 +51,12 @@ const ParsonsProblemContainer: React.FC<ParsonsProblemContainerProps> = ({
       setCurrentProblem(initialProblem);
     }
     
-    // If the problemId changes, we should reset context
+    // If the problemId changes, we should update the context's problemId
     if (problemId !== lastProblemId) {
-      resetContext();
+      // Use setProblemId to trigger automatic reset
+      if (problemId) {
+        setProblemId(problemId);
+      }
       setLastProblemId(problemId);
     }
   }, [initialProblem, currentProblem, setCurrentProblem, problemId, lastProblemId, resetContext]);

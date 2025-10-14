@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useCallback, useRef, useEffect } from 'react';
 import { ParsonsSettings, ParsonsOptions } from '@/@types/types';
 
 interface ParsonsContextType {
@@ -17,7 +17,9 @@ interface ParsonsContextType {
   attempts: number;
   incrementAttempts: () => void;
   handleFeedback: (feedback: any) => void;
-  resetContext: () => void; // New reset function
+  resetContext: () => void;
+  problemId: string | undefined; // Track which problem the state belongs to
+  setProblemId: (id: string | undefined) => void; // Update the problem ID
 }
 
 const defaultContext: ParsonsContextType = {
@@ -36,7 +38,9 @@ const defaultContext: ParsonsContextType = {
   attempts: 0,
   incrementAttempts: () => {},
   handleFeedback: () => {},
-  resetContext: () => {}, // New reset function
+  resetContext: () => {},
+  problemId: undefined,
+  setProblemId: () => {},
 };
 
 const ParsonsContext = createContext<ParsonsContextType>(defaultContext);
@@ -45,9 +49,10 @@ export const useParsonsContext = () => useContext(ParsonsContext);
 
 interface ParsonsProviderProps {
   children: ReactNode;
+  problemId?: string; // Optional problemId prop
 }
 
-export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
+export const ParsonsProvider = ({ children, problemId: initialProblemId }: ParsonsProviderProps) => {
   const [currentProblem, setCurrentProblem] = useState<ParsonsSettings | null>(null);
   const [userSolution, setUserSolution] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -55,12 +60,13 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [attempts, setAttempts] = useState<number>(0);
+  const [problemId, setProblemId] = useState<string | undefined>(initialProblemId);
 
   const incrementAttempts = useCallback(() => {
     setAttempts(prev => prev + 1);
   }, []);
 
-  // New reset function to clear all state values
+  // Reset function to clear all state values
   const resetContext = useCallback(() => {
     setCurrentProblem(null);
     setUserSolution([]);
@@ -70,6 +76,22 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
     setIsLoading(false);
     setAttempts(0);
   }, []);
+  
+  // Track the previous problemId to detect changes
+  const previousProblemIdRef = useRef<string | undefined>(problemId);
+  
+  // Automatically reset context when problemId changes
+  useEffect(() => {
+    // Only reset if problemId has changed and is not the first render
+    if (previousProblemIdRef.current !== undefined && 
+        problemId !== previousProblemIdRef.current) {
+      console.log(`[ParsonsContext] ProblemId changed from ${previousProblemIdRef.current} to ${problemId}, resetting context`);
+      resetContext();
+    }
+    
+    // Update the ref
+    previousProblemIdRef.current = problemId;
+  }, [problemId, resetContext]);
 
   const handleFeedback = (feedback: any) => {
     console.log("Feedback received:", feedback);
@@ -106,7 +128,9 @@ export const ParsonsProvider = ({ children }: ParsonsProviderProps) => {
         attempts,
         incrementAttempts,
         handleFeedback,
-        resetContext, // Include the new reset function
+        resetContext,
+        problemId,
+        setProblemId,
       }}
     >
       {children}

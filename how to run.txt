@@ -4,6 +4,8 @@ Running the Project
 
 # Make sure you're in the backend directory with the virtual environment activated
 
+venv\Scripts\activate
+
 uvicorn main:app --reload --port 8000
 
 2. Start the frontend development server (in a new terminal):

@@ -17,7 +17,8 @@ const ProblemPage: NextPage = () => {
     isCorrect, 
     isLoading, 
     setIsLoading,
-    resetContext
+    resetContext,
+    setProblemId
   } = useParsonsContext();
   
   const [title, setTitle] = useState('Loading problem...');
@@ -30,8 +31,8 @@ const ProblemPage: NextPage = () => {
     // Only fetch if we have an ID and it's different from the current one
     if (id && typeof id === 'string' && id !== currentProblemId) {
       const loadProblem = async () => {
-        // Reset context when loading a new problem
-        resetContext();
+        // Update problem ID in the context (will trigger automatic reset)
+        setProblemId(id);
         setCurrentProblemId(id);
         
         try {
@@ -46,7 +47,7 @@ const ProblemPage: NextPage = () => {
       
       loadProblem();
     }
-  }, [id, setCurrentProblem, resetContext, currentProblemId]);
+  }, [id, setCurrentProblem, setProblemId, currentProblemId]);
   
   const handleCheckSolution = async () => {
     if (!id || !userSolution.length) return;
