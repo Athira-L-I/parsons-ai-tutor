@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import problems, solutions, feedback
+from routers import problems, solutions, feedback, sessions  
 
 app = FastAPI(title="Parsons Problem Tutor API")
 
@@ -22,6 +22,7 @@ app.add_middleware(
 app.include_router(problems.router, prefix="/api/problems", tags=["problems"])
 app.include_router(solutions.router, prefix="/api/solutions", tags=["solutions"])
 app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
+app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
 
 @app.get("/")
 async def root():
