@@ -394,6 +394,15 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
       // Get feedback from widget
       const feedback = widget.getFeedback();
 
+      // Log widget hint event for incorrect solutions
+      if (feedback.success === false && widgetAdapter && feedback.html) {
+        widgetAdapter.logManualEvent('widgetHint', {
+          hintType: 'widget',
+          hintContent: feedback.html,
+          isCorrect: false,
+        });
+      }
+
       // Update application state
       if (feedback.success !== undefined) {
         setIsCorrect(feedback.success);
@@ -424,6 +433,17 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
             .generateFeedback(problemId || '', solution)
             .then((result) => {
               setSocraticFeedback(result);
+              
+              // Log socratic hint event
+              if (widgetAdapter && result) {
+                widgetAdapter.logManualEvent('socraticHint', {
+                  hintType: 'socratic',
+                  hintContent: result,
+                  isCorrect: false,
+                  solution: solution,
+                });
+              }
+              
               setIsLoading(false);
             })
             .catch((error) => {

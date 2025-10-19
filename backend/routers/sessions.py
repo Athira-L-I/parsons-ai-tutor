@@ -10,8 +10,13 @@ from typing import Optional
 from services.progsnap2_export import export_to_progsnap2
 from models import SessionSnapshot
 
-# Azure persistent storage - Use HOME directory for data persistence
-DATA_DIR = os.path.join(os.environ.get('HOME', '/home'), 'data', 'sessions')
+# Use local path for development, Azure path for production
+if os.environ.get('WEBSITE_SITE_NAME'):  # Azure App Service sets this
+    # Production: Azure persistent storage
+    DATA_DIR = os.path.join(os.environ.get('HOME', '/home'), 'data', 'sessions')
+else:
+    # Local development: relative to backend folder
+    DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'sessions')
 
 # Ensure data directory exists
 os.makedirs(DATA_DIR, exist_ok=True)

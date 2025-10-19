@@ -7,7 +7,10 @@ export type EventType =
   | 'removeOutput'
   | 'moveInput'
   | 'feedback'
-  | 'toggle';
+  | 'toggle'
+  | 'widgetHint'
+  | 'socraticHint'
+  | 'problem_solved';
 
 export interface ParsonsEvent {
   time: number; // Unix timestamp (milliseconds)
@@ -42,6 +45,14 @@ export interface BehavioralFeatures {
   // Error patterns (2)
   incorrectPositionErrors: number;
   incorrectIndentErrors: number;
+
+  // Hint patterns (6)
+  widgetHintCount: number;
+  socraticHintCount: number;
+  totalHintCount: number;
+  hintsPerAction: number;
+  timeToFirstHint: number;
+  avgTimeBetweenHints: number;
 }
 
 export interface SessionSnapshot {

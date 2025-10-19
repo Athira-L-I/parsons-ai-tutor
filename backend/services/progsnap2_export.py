@@ -75,6 +75,9 @@ def map_event_type(event_type: str) -> str:
         'removeOutput': 'File.Edit',
         'moveInput': 'File.Edit',
         'feedback': 'Run.Program',
-        'toggle': 'File.Edit'
+        'toggle': 'File.Edit',
+        'widgetHint': 'X-Hint.Widget',
+        'socraticHint': 'X-Hint.Socratic',
+        'problem_solved': 'Session.End'
     }
     return mapping.get(event_type, 'X-Unknown')

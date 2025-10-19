@@ -52,6 +52,12 @@ export class EventLogger {
       consecutiveFailures: 0,
       incorrectPositionErrors: 0,
       incorrectIndentErrors: 0,
+      widgetHintCount: 0,
+      socraticHintCount: 0,
+      totalHintCount: 0,
+      hintsPerAction: 0,
+      timeToFirstHint: 0,
+      avgTimeBetweenHints: 0,
     };
   }
 
@@ -162,6 +168,9 @@ export class EventLogger {
     if (event.type === 'feedback') {
       this.updateSuccessPatterns(event);
     }
+
+    // Hint patterns
+    this.updateHintFeatures(event, actualStartTime);
   }
 
   private updateSuccessPatterns(feedbackEvent: ParsonsEvent): void {
@@ -194,6 +203,41 @@ export class EventLogger {
       this.features.incorrectIndentErrors += errors.filter(
         (e) => e.type === 'incorrectIndent'
       ).length;
+    }
+  }
+
+  private updateHintFeatures(event: ParsonsEvent, actualStartTime: number): void {
+    // Count hint events
+    if (event.type === 'widgetHint') {
+      this.features.widgetHintCount++;
+    } else if (event.type === 'socraticHint') {
+      this.features.socraticHintCount++;
+    }
+
+    // Update total hint count
+    this.features.totalHintCount = this.features.widgetHintCount + this.features.socraticHintCount;
+
+    // Calculate hints per action ratio
+    const actionEvents = this.events.filter(e => 
+      ['moveOutput', 'addOutput', 'removeOutput', 'moveInput', 'feedback', 'toggle'].includes(e.type)
+    );
+    this.features.hintsPerAction = actionEvents.length > 0 
+      ? this.features.totalHintCount / actionEvents.length 
+      : 0;
+
+    // Time to first hint
+    if ((event.type === 'widgetHint' || event.type === 'socraticHint') && this.features.timeToFirstHint === 0) {
+      this.features.timeToFirstHint = event.time - actualStartTime;
+    }
+
+    // Average time between hints
+    const hintEvents = this.events.filter(e => e.type === 'widgetHint' || e.type === 'socraticHint');
+    if (hintEvents.length > 1) {
+      let totalTimeDiff = 0;
+      for (let i = 1; i < hintEvents.length; i++) {
+        totalTimeDiff += hintEvents[i].time - hintEvents[i - 1].time;
+      }
+      this.features.avgTimeBetweenHints = totalTimeDiff / (hintEvents.length - 1);
     }
   }
 
