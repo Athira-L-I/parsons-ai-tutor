@@ -24,22 +24,22 @@ export class ParsonsWidgetAdapter {
   }
 
   /**
-   * FIXED: Multiple interception strategies
+   * FIXED: Single interception strategy to prevent duplicates
    */
   private attachListeners(): void {
     console.log('[Adapter] Attaching listeners to Parsons widget...');
 
-    // Strategy 1: Intercept addLogEntry (if it exists)
+    // Strategy 1: Intercept addLogEntry (primary method)
     if (this.widgetInstance.addLogEntry) {
       this.interceptAddLogEntry();
     } else {
       console.warn('[Adapter] Widget has no addLogEntry method');
     }
 
-    // Strategy 2: Listen to user_actions array changes
-    this.monitorUserActions();
+    // ✅ REMOVED: Array monitoring to prevent duplicates
+    // this.monitorUserActions();
 
-    // Strategy 3: Hook into getFeedback
+    // Strategy 2: Hook into getFeedback
     this.interceptGetFeedback();
 
     // Capture initial state
@@ -68,9 +68,10 @@ export class ParsonsWidgetAdapter {
   }
 
   /**
-   * Strategy 2: Monitor user_actions array (polling)
-   * This is a fallback if addLogEntry doesn't work
+   * ✅ REMOVED: This method was causing duplicates
+   * Keeping as comment for reference but not calling it
    */
+  /*
   private monitorUserActions(): void {
     let lastLength = 0;
 
@@ -84,7 +85,7 @@ export class ParsonsWidgetAdapter {
         for (let i = lastLength; i < currentLength; i++) {
           const action = this.widgetInstance.user_actions[i];
           console.log('[Adapter] New action detected:', action);
-          this.captureWidgetEvent(action);
+          this.captureWidgetEvent(action); // ✅ DUPLICATE SOURCE REMOVED
         }
         lastLength = currentLength;
       }
@@ -94,6 +95,7 @@ export class ParsonsWidgetAdapter {
     setInterval(checkActions, 500);
     console.log('[Adapter] Started monitoring user_actions array');
   }
+  */
 
   /**
    * Strategy 3: Intercept getFeedback method
@@ -114,21 +116,33 @@ export class ParsonsWidgetAdapter {
       // Get feedback from original method
       const feedback = originalGetFeedback();
 
-      // Log feedback event
-      this.logger.logEvent({
-        time: Date.now(),
-        type: 'feedback',
-        output: this.widgetInstance.solutionHash(),
-        input: this.widgetInstance.options.trashId
-          ? this.widgetInstance.trashHash()
-          : undefined,
-        metadata: {
-          success: feedback.success,
-          errors: feedback.log_errors || [],
-        },
-      });
+      // ✅ FIXED: Only log if not already logged by addLogEntry
+      // Check if this feedback was already captured
+      const recentEvents = this.logger.getSessionSnapshot().events.slice(-3);
+      const hasFeedbackEvent = recentEvents.some(e => 
+        e.type === 'feedback' && 
+        Math.abs(e.time - Date.now()) < 1000 // Within last second
+      );
 
-      console.log('[Adapter] Logged feedback event');
+      if (!hasFeedbackEvent) {
+        // Log feedback event only if not already captured
+        this.logger.logEvent({
+          time: Date.now(),
+          type: 'feedback',
+          output: this.widgetInstance.solutionHash(),
+          input: this.widgetInstance.options.trashId
+            ? this.widgetInstance.trashHash()
+            : undefined,
+          metadata: {
+            success: feedback.success,
+            errors: feedback.log_errors || [],
+          },
+        });
+
+        console.log('[Adapter] Logged feedback event');
+      } else {
+        console.log('[Adapter] Feedback event already logged, skipping duplicate');
+      }
 
       return feedback;
     };
@@ -220,21 +234,71 @@ export class ParsonsWidgetAdapter {
   }
 
   /**
-   * Manual event logging (fallback)
-   * Call this from component when widget interactions happen
+   * Manual event logging (enhanced for hint events)
    */
   public logManualEvent(eventType: string, metadata?: any): void {
+    console.log(`[ParsonsWidgetAdapter] logManualEvent called:`, {
+      eventType,
+      metadata,
+      hasLogger: !!this.logger,
+      hasWidgetInstance: !!this.widgetInstance,
+    });
+
+    // Handle X-Hint events specially
+    if (eventType === 'X-Hint.Widget' || eventType === 'X-Hint.Socratic') {
+      console.log(`[ParsonsWidgetAdapter] Processing ${eventType} event`);
+
+      const event = {
+        time: Date.now(),
+        type: eventType as any,
+        output: this.getCurrentState(),
+        input: '-',
+        metadata: metadata || {},
+      };
+
+      console.log(`[ParsonsWidgetAdapter] Event to log:`, event);
+
+      this.logger.logEvent(event);
+      console.log(`[ParsonsWidgetAdapter] ✅ Successfully logged ${eventType}`);
+      return;
+    }
+
+    // Handle other manual events
     this.logger.logEvent({
       time: Date.now(),
       type: eventType as any,
-      output: this.widgetInstance.solutionHash(),
-      input: this.widgetInstance.options.trashId
-        ? this.widgetInstance.trashHash()
-        : undefined,
-      metadata,
+      output: this.getCurrentState(),
+      input: this.getCurrentInputState(),
+      metadata: metadata || {},
     });
 
-    console.log('[Adapter] Manually logged event:', eventType);
+    console.log(`[ParsonsWidgetAdapter] Logged manual event: ${eventType}`);
+  }
+
+  /**
+   * Get current puzzle state safely
+   */
+  private getCurrentState(): string {
+    try {
+      return this.widgetInstance.solutionHash() || '';
+    } catch (e) {
+      console.warn('[Adapter] Could not get solution hash:', e);
+      return '';
+    }
+  }
+
+  /**
+   * Get current input state safely
+   */
+  private getCurrentInputState(): string {
+    try {
+      return this.widgetInstance.options.trashId
+        ? this.widgetInstance.trashHash()
+        : '-';
+    } catch (e) {
+      console.warn('[Adapter] Could not get trash hash:', e);
+      return '-';
+    }
   }
 
   /**

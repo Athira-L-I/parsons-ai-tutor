@@ -8,8 +8,8 @@ export type EventType =
   | 'moveInput'
   | 'feedback'
   | 'toggle'
-  | 'widgetHint'
-  | 'socraticHint'
+  | 'X-Hint.Widget'
+  | 'X-Hint.Socratic'
   | 'problem_solved';
 
 export interface ParsonsEvent {

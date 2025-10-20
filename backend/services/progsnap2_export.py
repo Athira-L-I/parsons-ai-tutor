@@ -38,6 +38,13 @@ def export_to_progsnap2(sessions: List[Dict[str, Any]]) -> str:
             # Timestamp
             timestamp = datetime.fromtimestamp(event['time'] / 1000).isoformat()
             
+            # Extract X-HintData for hint events
+            hint_data = ''
+            if event['type'].startswith('X-Hint.'):
+                metadata = event.get('metadata', {})
+                if 'X-HintData' in metadata:
+                    hint_data = json.dumps(metadata['X-HintData'])
+            
             row = {
                 'EventType': event_type,
                 'SessionID': session_id,
@@ -46,18 +53,19 @@ def export_to_progsnap2(sessions: List[Dict[str, Any]]) -> str:
                 'ProblemID': problem_id,
                 'CodeStateID': event.get('output', ''),
                 'Timestamp': timestamp,
-                'EventData': json.dumps(event)
+                'EventData': json.dumps(event),
+                'X-HintData': hint_data
             }
             rows.append(row)
     
     # Convert to CSV string
     if not rows:
-        return "EventType,SessionID,Order,SubjectID,ProblemID,CodeStateID,Timestamp,EventData\n"
+        return "EventType,SessionID,Order,SubjectID,ProblemID,CodeStateID,Timestamp,EventData,X-HintData\n"
     
     output = io.StringIO()
     fieldnames = [
         'EventType', 'SessionID', 'Order', 'SubjectID', 
-        'ProblemID', 'CodeStateID', 'Timestamp', 'EventData'
+        'ProblemID', 'CodeStateID', 'Timestamp', 'EventData', 'X-HintData'
     ]
     
     writer = csv.DictWriter(output, fieldnames=fieldnames)
@@ -76,8 +84,8 @@ def map_event_type(event_type: str) -> str:
         'moveInput': 'File.Edit',
         'feedback': 'Run.Program',
         'toggle': 'File.Edit',
-        'widgetHint': 'X-Hint.Widget',
-        'socraticHint': 'X-Hint.Socratic',
+        'X-Hint.Widget': 'X-Hint.Widget',
+        'X-Hint.Socratic': 'X-Hint.Socratic',
         'problem_solved': 'Session.End'
     }
     return mapping.get(event_type, 'X-Unknown')

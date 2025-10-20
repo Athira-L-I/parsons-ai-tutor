@@ -206,38 +206,56 @@ export class EventLogger {
     }
   }
 
-  private updateHintFeatures(event: ParsonsEvent, actualStartTime: number): void {
+  private updateHintFeatures(
+    event: ParsonsEvent,
+    actualStartTime: number
+  ): void {
     // Count hint events
-    if (event.type === 'widgetHint') {
+    if (event.type === 'X-Hint.Widget') {
       this.features.widgetHintCount++;
-    } else if (event.type === 'socraticHint') {
+    } else if (event.type === 'X-Hint.Socratic') {
       this.features.socraticHintCount++;
     }
 
     // Update total hint count
-    this.features.totalHintCount = this.features.widgetHintCount + this.features.socraticHintCount;
+    this.features.totalHintCount =
+      this.features.widgetHintCount + this.features.socraticHintCount;
 
     // Calculate hints per action ratio
-    const actionEvents = this.events.filter(e => 
-      ['moveOutput', 'addOutput', 'removeOutput', 'moveInput', 'feedback', 'toggle'].includes(e.type)
+    const actionEvents = this.events.filter((e) =>
+      [
+        'moveOutput',
+        'addOutput',
+        'removeOutput',
+        'moveInput',
+        'feedback',
+        'toggle',
+      ].includes(e.type)
     );
-    this.features.hintsPerAction = actionEvents.length > 0 
-      ? this.features.totalHintCount / actionEvents.length 
-      : 0;
+    this.features.hintsPerAction =
+      actionEvents.length > 0
+        ? this.features.totalHintCount / actionEvents.length
+        : 0;
 
     // Time to first hint
-    if ((event.type === 'widgetHint' || event.type === 'socraticHint') && this.features.timeToFirstHint === 0) {
+    if (
+      (event.type === 'X-Hint.Widget' || event.type === 'X-Hint.Socratic') &&
+      this.features.timeToFirstHint === 0
+    ) {
       this.features.timeToFirstHint = event.time - actualStartTime;
     }
 
     // Average time between hints
-    const hintEvents = this.events.filter(e => e.type === 'widgetHint' || e.type === 'socraticHint');
+    const hintEvents = this.events.filter(
+      (e) => e.type === 'X-Hint.Widget' || e.type === 'X-Hint.Socratic'
+    );
     if (hintEvents.length > 1) {
       let totalTimeDiff = 0;
       for (let i = 1; i < hintEvents.length; i++) {
         totalTimeDiff += hintEvents[i].time - hintEvents[i - 1].time;
       }
-      this.features.avgTimeBetweenHints = totalTimeDiff / (hintEvents.length - 1);
+      this.features.avgTimeBetweenHints =
+        totalTimeDiff / (hintEvents.length - 1);
     }
   }
 
