@@ -434,23 +434,50 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
 
         console.log('[DEBUG] Display message extracted:', displayMessage);
 
+        // ✅ FIXED: Extract error info from adapter's captured data
+        let errorType = 'incorrectPosition';
+        let errorLines: number[] = [];
+
+        if (widgetAdapter) {
+          const errorData = widgetAdapter.getLastErrorData();
+          console.log('[DEBUG] Error data from adapter:', errorData);
+          
+          if (errorData && errorData.length > 0) {
+            // Get error type from first error
+            errorType = errorData[0].type || 'incorrectPosition';
+            
+            // Collect all line numbers from all errors
+            errorLines = [];
+            for (const error of errorData) {
+              if (error.lines && Array.isArray(error.lines)) {
+                errorLines.push(...error.lines);
+              }
+            }
+            
+            // Remove duplicates
+            errorLines = Array.from(new Set(errorLines));
+          }
+        }
+
+        console.log('[DEBUG] Final extracted error type:', errorType);
+        console.log('[DEBUG] Final extracted error lines:', errorLines);
+
         // ✅ Log widget hint using the SAME message shown in UI
         if (widgetAdapter && !feedback.success && displayMessage) {
-          console.log('[DEBUG] ✅ SHOULD LOG WIDGET HINT NOW');
+          console.log('[DEBUG] ✅ Logging widget hint for LineBasedGrader');
           console.log('[DEBUG] Widget hint message:', displayMessage);
-
-          const errorType =
-            feedback.log_errors?.[0]?.type || 'incorrectPosition';
-          const errorLines =
-            feedback.log_errors?.map((e: any) => e.lines).flat() || [];
+          console.log('[DEBUG] Extracted error type:', errorType);
+          console.log('[DEBUG] Extracted error lines:', errorLines);
 
           try {
             widgetAdapter.logManualEvent('X-Hint.Widget', {
               'X-HintData': {
-                hintType: errorType,
-                message: displayMessage, // ✅ Use exact message shown to user
-                errorLines: errorLines,
+                hintType: errorType, // ✅ Now correctly extracted from adapter
+                message: displayMessage, // ✅ Exact message shown to user
+                errorLines: errorLines, // ✅ Now correctly populated from adapter
                 fromState: getCurrentPuzzleState(),
+                // ✅ ADD: Include raw error data for debugging
+                rawErrorData: widgetAdapter.getLastErrorData()
               },
             });
             console.log('[DEBUG] ✅ Widget hint logged successfully');
@@ -496,7 +523,13 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
           setIsLoading(true);
 
           api
-            .generateFeedback(problemId || '', solution)
+            .generateFeedback(problemId || '', solution, {
+              errorType: errorType,
+              errorLines: errorLines, 
+              widgetMessage: displayMessage,
+              rawErrors: feedback.errors || [],
+              rawLogErrors: feedback.log_errors || []
+            })
             .then((socraticFeedbackResult) => {
               console.log(
                 '[DEBUG] ✅ Socratic feedback received:',
@@ -506,14 +539,23 @@ const ParsonsWidgetComponent: React.FC<ParsonsWidgetProps> = ({
               setIsLoading(false);
 
               if (widgetAdapter && socraticFeedbackResult) {
+                // ✅ Include error context for better analysis
+                const contextData = {
+                  message: socraticFeedbackResult,
+                  hintType: 'suggestion',
+                  conversationContext: `problem-${problemId}-${Date.now()}`,
+                  // ✅ ADD: Error context to help understand the pattern
+                  errorContext: {
+                    errorType: errorType, // From widget hint extraction above
+                    errorLines: errorLines, // From widget hint extraction above
+                    widgetMessage: displayMessage // What the widget told the user
+                  }
+                };
+
                 widgetAdapter.logManualEvent('X-Hint.Socratic', {
-                  'X-HintData': {
-                    message: socraticFeedbackResult,
-                    hintType: 'suggestion',
-                    conversationContext: `problem-${problemId}-${Date.now()}`,
-                  },
+                  'X-HintData': contextData
                 });
-                console.log('[DEBUG] ✅ Socratic hint logged successfully');
+                console.log('[DEBUG] ✅ Socratic hint logged with error context');
               }
             })
             .catch((error) => {

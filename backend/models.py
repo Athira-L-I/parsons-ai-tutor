@@ -56,9 +56,17 @@ class SolutionValidation(BaseModel):
     isCorrect: bool
     details: Optional[str] = None
 
+class ErrorContext(BaseModel):
+    errorType: str
+    errorLines: List[int]
+    widgetMessage: str
+    rawErrors: List[Dict[str, Any]]
+    rawLogErrors: List[Dict[str, Any]]
+
 class FeedbackRequest(BaseModel):
     problemId: str
     userSolution: List[str]
+    errorContext: Optional[ErrorContext] = None
 
 class FeedbackResponse(BaseModel):
     feedback: str

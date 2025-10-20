@@ -43,11 +43,22 @@ export const checkSolution = async (problemId: string, solution: string[]) => {
   }
 };
 
-export const generateFeedback = async (problemId: string, solution: string[]) => {
+export const generateFeedback = async (
+  problemId: string, 
+  solution: string[], 
+  errorContext?: {
+    errorType: string;
+    errorLines: number[];
+    widgetMessage: string;
+    rawErrors: any[];
+    rawLogErrors: any[];
+  }
+) => {
   try {
     const response = await apiClient.post(`/api/feedback`, {
       problemId,
-      userSolution: solution
+      userSolution: solution,
+      errorContext: errorContext
     });
     return response.data.feedback;
   } catch (error) {

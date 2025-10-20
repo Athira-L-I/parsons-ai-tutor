@@ -10,6 +10,7 @@ import { ParsonsEvent, SessionSnapshot } from './types';
 export class ParsonsWidgetAdapter {
   private logger: EventLogger;
   private widgetInstance: any;
+  private lastErrorData: Array<{type: string, lines: number[] | number}> = [];
 
   constructor(
     widgetInstance: any,
@@ -56,6 +57,26 @@ export class ParsonsWidgetAdapter {
 
     this.widgetInstance.addLogEntry = (entry: any) => {
       console.log('[Adapter] addLogEntry called:', entry);
+
+      // ✅ CAPTURE ERROR DATA for hint logging
+      if (entry.type === 'feedback' && entry.errors && Array.isArray(entry.errors)) {
+        this.lastErrorData = entry.errors.map((error: any) => ({
+          type: error.type || 'unknown',
+          lines: (() => {
+            // Handle both singular 'line' and plural 'lines' properties
+            if (typeof error.line === 'number') {
+              return [error.line];
+            } else if (Array.isArray(error.lines)) {
+              return error.lines;
+            } else if (typeof error.lines === 'number') {
+              return [error.lines];
+            } else {
+              return [];
+            }
+          })()
+        }));
+        console.log('[Adapter] Captured error data for hints:', this.lastErrorData);
+      }
 
       // Let native widget do its thing
       originalAddLogEntry(entry);
@@ -327,6 +348,16 @@ export class ParsonsWidgetAdapter {
       ...baseSnapshot,
       originalLog,
     };
+  }
+
+  /**
+   * Get last captured error data from widget feedback
+   */
+  getLastErrorData(): Array<{type: string, lines: number[]}> {
+    return this.lastErrorData.map(error => ({
+      type: error.type,
+      lines: Array.isArray(error.lines) ? error.lines : [error.lines]
+    }));
   }
 
   /**
