@@ -49,4 +49,6 @@ Thumbs.db
 
 # Project specific
 /backend/data/sessions/*.json
+/backend/data/sessions/
+
 .vercel

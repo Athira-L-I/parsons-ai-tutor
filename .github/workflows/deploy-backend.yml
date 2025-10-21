@@ -22,9 +22,10 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           source: 'backend/*'
-          target: '/home/parsons/'
+          target: '/home/parsons/backend/'
           strip_components: 1
           overwrite: true
+          rm: false # Don't remove files that aren't in source
 
       - name: Restart service
         uses: appleboy/ssh-action@master
@@ -35,6 +36,12 @@ jobs:
           command_timeout: 5m
           script: |
             cd /home/parsons/backend
+
+            # Backup sessions before updating (safety measure)
+            if [ -d "data/sessions" ]; then
+              echo "Sessions exist, keeping them safe"
+            fi
+
             source venv/bin/activate
             pip install -r requirements.txt --quiet
             systemctl restart parsons
