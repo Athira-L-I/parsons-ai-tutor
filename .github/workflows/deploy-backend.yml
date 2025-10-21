@@ -15,44 +15,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy files to server
+      - name: Copy backend files to Droplet
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: 'backend/'
+          source: 'backend/*'
           target: '/home/parsons/'
           strip_components: 1
           overwrite: true
 
-      - name: Deploy
+      - name: Restart service
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          command_timeout: 5m
           script: |
-            cd /home/parsons/
-
-            # Stop existing service (ignore all exit codes)
-            pkill -f "python.*main.py" ; true
-            sleep 3
-
-            # Clean and recreate environment
-            rm -rf venv/
-            python3 -m venv venv
+            cd /home/parsons/backend
             source venv/bin/activate
-
-            # Install dependencies
-            pip install --upgrade pip
-            pip install -r requirements.txt
-
-            # Create .env
-            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
-            echo "PORT=8000" >> .env
-
-            # Start service
-            nohup python main.py > server.log 2>&1 &
-
-            echo "Deployment complete"
+            pip install -r requirements.txt --quiet
+            systemctl restart parsons
+            sleep 2
+            systemctl status parsons --no-pager
