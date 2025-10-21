@@ -1,7 +1,14 @@
+#core dependencies
 fastapi==0.115.0
 uvicorn==0.30.0
 pydantic>=2.10.0
 python-dotenv==1.0.0
+
+#openai api
 openai==1.54.0
+
+#utilities
 typing-extensions==4.12.0
+
+#web server
 gunicorn==23.0.0
