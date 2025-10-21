@@ -22,9 +22,10 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: 'backend/*'
+          source: 'backend/'
           target: '/home/parsons/'
           strip_components: 1
+          overwrite: true
           rm: false
 
       - name: Deploy and restart service
@@ -36,34 +37,47 @@ jobs:
           script: |
             echo "🚀 Starting deployment..."
             cd /home/parsons/
-            
+
+            # Create data directory if it doesn't exist
+            mkdir -p data/
+
             # Stop existing service
             echo "Stopping existing service..."
             pkill -f "python.*main.py" || true
             sleep 3
-            
+
             # Clean Python environment
             echo "Cleaning environment..."
             rm -rf venv/
             rm -rf __pycache__/
             find . -name "*.pyc" -delete 2>/dev/null || true
-            
+
             # Create fresh virtual environment
             echo "Creating virtual environment..."
             python3 -m venv venv
             source venv/bin/activate
-            
+
             # Upgrade pip
             python -m pip install --upgrade pip
-            
-            # Install dependencies with clean cache
+
+            # Install dependencies
             echo "Installing dependencies..."
             pip install --no-cache-dir -r requirements.txt
-            
+
+            # Verify problems.json exists
+            if [ -f "data/problems.json" ]; then
+              echo "✅ problems.json found"
+              problem_count=$(jq length data/problems.json 2>/dev/null || echo "unknown")
+              echo "📊 Problems count: $problem_count"
+            else
+              echo "❌ problems.json not found!"
+              ls -la data/ || echo "data/ directory doesn't exist"
+            fi
+
             # Verify installation
             echo "Verifying installation..."
             python -c "import fastapi, pydantic, openai; print('✅ All packages imported successfully')"
-            
+
             # Create environment file
             echo "Setting up environment..."
             cat > .env << 'EOF'
@@ -72,11 +86,11 @@ jobs:
             PORT=8000
             HOST=0.0.0.0
             EOF
-            
+
             # Start service
             echo "Starting service..."
             nohup python main.py > server.log 2>&1 &
-            
+
             # Verify service started
             sleep 10
             if pgrep -f "python.*main.py" > /dev/null; then
@@ -88,13 +102,20 @@ jobs:
               else
                 echo "⚠️ Health check failed but service is running"
               fi
+              
+              # Test problems endpoint
+              if curl -f http://localhost:8000/api/problems 2>/dev/null | head -100; then
+                echo "✅ Problems API responding"
+              else
+                echo "⚠️ Problems API not responding"
+              fi
             else
               echo "❌ Service failed to start"
               echo "=== Recent logs ==="
               tail -20 server.log
               exit 1
             fi
-            
+
             echo "🎉 Deployment completed successfully!"
 
       - name: Notify on failure
