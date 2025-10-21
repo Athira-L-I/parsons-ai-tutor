@@ -9,6 +9,9 @@ origins = [
     "http://localhost:3000",  # Next.js frontend
     "https://parsons-problem-tutor.vercel.app",  # Production frontend
     "http://165.232.181.129",
+    # Add these for Vercel proxy
+    "https://*.vercel.app",
+    "*"  # Temporary - remove after testing
 ]
 
 app.add_middleware(
@@ -19,6 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add a health check endpoint
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "message": "Parsons API is running"}
+
 # Include routers
 app.include_router(problems.router, prefix="/api/problems", tags=["problems"])
 app.include_router(solutions.router, prefix="/api/solutions", tags=["solutions"])
@@ -28,6 +36,10 @@ app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
 @app.get("/")
 async def root():
     return {"message": "Welcome to Parsons Problem Tutor API"}
+
+@app.get("/api")
+async def api_root():
+    return {"message": "Parsons Problem Tutor API - /api endpoint"}
 
 if __name__ == "__main__":
     import uvicorn
