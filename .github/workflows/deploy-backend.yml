@@ -35,16 +35,38 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
+            set -e  # Exit on any error
+            
             echo "🚀 Starting deployment..."
             cd /home/parsons/
 
             # Create data directory if it doesn't exist
             mkdir -p data/
 
-            # Stop existing service
+            # Stop existing service (handle exit codes properly)
             echo "Stopping existing service..."
-            pkill -f "python.*main.py" || true
-            sleep 3
+            if pgrep -f "python.*main.py" > /dev/null; then
+              echo "Found running Python service, stopping it..."
+              pkill -f "python.*main.py" && echo "Service stopped successfully" || true
+              sleep 5
+              
+              # Force kill if still running
+              if pgrep -f "python.*main.py" > /dev/null; then
+                echo "Force killing stubborn processes..."
+                pkill -9 -f "python.*main.py" || true
+                sleep 2
+              fi
+            else
+              echo "No running Python service found"
+            fi
+
+            # Verify no Python processes are running
+            if pgrep -f "python.*main.py" > /dev/null; then
+              echo "❌ Failed to stop existing service"
+              exit 1
+            else
+              echo "✅ All Python services stopped"
+            fi
 
             # Clean Python environment
             echo "Cleaning environment..."
@@ -57,26 +79,52 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
 
+            # Verify virtual environment is active
+            if [[ "$VIRTUAL_ENV" != "" ]]; then
+              echo "✅ Virtual environment activated: $VIRTUAL_ENV"
+            else
+              echo "❌ Failed to activate virtual environment"
+              exit 1
+            fi
+
             # Upgrade pip
+            echo "Upgrading pip..."
             python -m pip install --upgrade pip
 
             # Install dependencies
             echo "Installing dependencies..."
-            pip install --no-cache-dir -r requirements.txt
+            if pip install --no-cache-dir -r requirements.txt; then
+              echo "✅ Dependencies installed successfully"
+            else
+              echo "❌ Failed to install dependencies"
+              exit 1
+            fi
 
             # Verify problems.json exists
             if [ -f "data/problems.json" ]; then
               echo "✅ problems.json found"
-              problem_count=$(jq length data/problems.json 2>/dev/null || echo "unknown")
-              echo "📊 Problems count: $problem_count"
+              if command -v jq &> /dev/null; then
+                problem_count=$(jq length data/problems.json 2>/dev/null || echo "unknown")
+                echo "📊 Problems count: $problem_count"
+              else
+                echo "📊 Problems file exists (jq not available for counting)"
+              fi
             else
               echo "❌ problems.json not found!"
+              echo "📁 Contents of current directory:"
+              ls -la
+              echo "📁 Contents of data directory:"
               ls -la data/ || echo "data/ directory doesn't exist"
             fi
 
             # Verify installation
             echo "Verifying installation..."
-            python -c "import fastapi, pydantic, openai; print('✅ All packages imported successfully')"
+            if python -c "import fastapi, pydantic, openai; print('✅ All packages imported successfully')"; then
+              echo "✅ Package verification passed"
+            else
+              echo "❌ Package verification failed"
+              exit 1
+            fi
 
             # Create environment file
             echo "Setting up environment..."
@@ -87,32 +135,54 @@ jobs:
             HOST=0.0.0.0
             EOF
 
+            # Test if main.py can be imported
+            echo "Testing main.py import..."
+            if python -c "import main; print('✅ main.py imports successfully')"; then
+              echo "✅ Application import test passed"
+            else
+              echo "❌ Application import test failed"
+              echo "=== Error details ==="
+              python -c "import main" 2>&1 || true
+              exit 1
+            fi
+
             # Start service
             echo "Starting service..."
             nohup python main.py > server.log 2>&1 &
+            SERVICE_PID=$!
+            echo "Started service with PID: $SERVICE_PID"
+
+            # Wait for service to initialize
+            echo "Waiting for service to initialize..."
+            sleep 15
 
             # Verify service started
-            sleep 10
             if pgrep -f "python.*main.py" > /dev/null; then
               echo "✅ Service started successfully"
               
               # Test health endpoint
+              echo "Testing health endpoint..."
               if curl -f http://localhost:8000/health 2>/dev/null; then
                 echo "✅ Health check passed"
               else
                 echo "⚠️ Health check failed but service is running"
+                echo "=== Recent server logs ==="
+                tail -10 server.log
               fi
               
               # Test problems endpoint
+              echo "Testing problems endpoint..."
               if curl -f http://localhost:8000/api/problems 2>/dev/null | head -100; then
                 echo "✅ Problems API responding"
               else
                 echo "⚠️ Problems API not responding"
+                echo "=== Recent server logs ==="
+                tail -10 server.log
               fi
             else
               echo "❌ Service failed to start"
-              echo "=== Recent logs ==="
-              tail -20 server.log
+              echo "=== Full server logs ==="
+              cat server.log
               exit 1
             fi
 
