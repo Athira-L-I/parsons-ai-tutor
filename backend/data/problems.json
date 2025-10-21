@@ -843,26 +843,5 @@
           "show_feedback": true
         }
       }
-    },
-    {
-      "id": "countdown_timer",
-      "title": "Countdown from N to 0",
-      "description": "Ask the user for a number N and print a countdown from N down to 0.",
-      "difficulty": "easy",
-      "tags": ["python", "loops", "countdown"],
-      "parsonsSettings": {
-        "initial": "n = int(input('Countdown from: '))\nfor i in range(n, -1, -1):\n    print(i)",
-        "options": {
-          "sortableId": "sortable",
-          "trashId": "sortableTrash",
-          "max_wrong_lines": 0,
-          "grader": "ParsonsWidget._graders.LineBasedGrader",
-          "can_indent": true,
-          "x_indent": 50,
-          "exec_limit": 2500,
-          "feedback_cb": true,
-          "show_feedback": true
-        }
-      }
     }
 ]
