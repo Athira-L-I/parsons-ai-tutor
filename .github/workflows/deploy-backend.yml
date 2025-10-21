@@ -35,8 +35,8 @@ jobs:
           script: |
             cd /home/parsons/
 
-            # Stop existing service
-            pkill -f "python.*main.py" || true
+            # Stop existing service (ignore all exit codes)
+            pkill -f "python.*main.py" ; true
             sleep 3
 
             # Clean and recreate environment
