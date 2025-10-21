@@ -507,5 +507,362 @@
           "show_feedback": true
         }
       }
-    }    
+    },
+    {
+      "id": "count_to_n",
+      "title": "Count from 1 to N",
+      "description": "Write a program that asks the user for a number N, then prints all numbers from 1 to N using a loop.",
+      "difficulty": "easy",
+      "tags": ["python", "loops", "input"],
+      "parsonsSettings": {
+        "initial": "n = int(input('Count to: '))\nfor i in range(1, n + 1):\n    print(i)",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "sum_numbers",
+      "title": "Sum Numbers from 1 to N",
+      "description": "Write a program that calculates and prints the sum of all numbers from 1 to N. Ask the user for N.",
+      "difficulty": "easy",
+      "tags": ["python", "loops", "arithmetic"],
+      "parsonsSettings": {
+        "initial": "n = int(input('Sum from 1 to: '))\ntotal = 0\nfor i in range(1, n + 1):\n    total = total + i\nprint(f'Sum is: {total}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "multiplication_table",
+      "title": "Print Multiplication Table",
+      "description": "Write a program that asks for a number and prints its multiplication table from 1 to 10.",
+      "difficulty": "easy",
+      "tags": ["python", "loops", "multiplication"],
+      "parsonsSettings": {
+        "initial": "num = int(input('Multiplication table for: '))\nfor i in range(1, 11):\n    result = num * i\n    print(f'{num} x {i} = {result}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "even_odd_check",
+      "title": "Check If Number Is Even or Odd",
+      "description": "Write a program that asks the user for a number and prints whether it is even or odd.",
+      "difficulty": "easy",
+      "tags": ["python", "conditionals", "modulo"],
+      "parsonsSettings": {
+        "initial": "num = int(input('Enter a number: '))\nif num % 2 == 0:\n    print('Even')\nelse:\n    print('Odd')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "count_even_numbers",
+      "title": "Count Even Numbers in Range",
+      "description": "Write a program that counts how many even numbers exist from 1 to N (user input).",
+      "difficulty": "medium",
+      "tags": ["python", "loops", "conditionals", "counters"],
+      "parsonsSettings": {
+        "initial": "n = int(input('Count evens up to: '))\ncount = 0\nfor i in range(1, n + 1):\n    if i % 2 == 0:\n        count = count + 1\nprint(f'Even numbers: {count}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "find_max",
+      "title": "Find Maximum of Three Numbers",
+      "description": "Ask the user for three numbers and print the largest one using conditionals.",
+      "difficulty": "medium",
+      "tags": ["python", "conditionals", "comparison"],
+      "parsonsSettings": {
+        "initial": "a = int(input('Number 1: '))\nb = int(input('Number 2: '))\nc = int(input('Number 3: '))\nif a >= b and a >= c:\n    print(f'Max is: {a}')\nelif b >= a and b >= c:\n    print(f'Max is: {b}')\nelse:\n    print(f'Max is: {c}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "factorial",
+      "title": "Calculate Factorial",
+      "description": "Write a program that calculates the factorial of a number. For example, 5! = 5 * 4 * 3 * 2 * 1 = 120.",
+      "difficulty": "medium",
+      "tags": ["python", "loops", "arithmetic"],
+      "parsonsSettings": {
+        "initial": "n = int(input('Calculate factorial of: '))\nresult = 1\nfor i in range(1, n + 1):\n    result = result * i\nprint(f'{n}! = {result}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "temperature_converter",
+      "title": "Convert Celsius to Fahrenheit",
+      "description": "Ask the user for a temperature in Celsius and convert it to Fahrenheit using the formula: F = (C * 9/5) + 32.",
+      "difficulty": "easy",
+      "tags": ["python", "arithmetic", "formulas"],
+      "parsonsSettings": {
+        "initial": "celsius = float(input('Temperature in Celsius: '))\nfahrenheit = (celsius * 9/5) + 32\nprint(f'{celsius}°C = {fahrenheit}°F')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "student_grade",
+      "title": "Determine Letter Grade",
+      "description": "Ask for a student's score (0-100) and print their letter grade: A (90+), B (80+), C (70+), D (60+), F (below 60).",
+      "difficulty": "medium",
+      "tags": ["python", "conditionals", "ranges"],
+      "parsonsSettings": {
+        "initial": "score = int(input('Enter score: '))\nif score >= 90:\n    print('Grade: A')\nelif score >= 80:\n    print('Grade: B')\nelif score >= 70:\n    print('Grade: C')\nelif score >= 60:\n    print('Grade: D')\nelse:\n    print('Grade: F')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "password_validator",
+      "title": "Simple Password Validator",
+      "description": "Ask the user to enter a password. Keep asking until they enter the correct password (correct = 'secret123'). Count how many attempts they made.",
+      "difficulty": "medium",
+      "tags": ["python", "loops", "conditionals", "counters"],
+      "parsonsSettings": {
+        "initial": "attempts = 0\nwhile True:\n    password = input('Enter password: ')\n    attempts = attempts + 1\n    if password == 'secret123':\n        print(f'Correct! Attempts: {attempts}')\n        break\n    else:\n        print('Wrong password, try again')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "list_average",
+      "title": "Calculate Average of Numbers",
+      "description": "Ask the user how many numbers they want to enter, then ask for each number and calculate the average.",
+      "difficulty": "medium",
+      "tags": ["python", "loops", "lists", "arithmetic"],
+      "parsonsSettings": {
+        "initial": "count = int(input('How many numbers? '))\ntotal = 0\nfor i in range(count):\n    num = int(input('Enter number: '))\n    total = total + num\naverage = total / count\nprint(f'Average: {average}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "fibonacci_sequence",
+      "title": "Print Fibonacci Sequence",
+      "description": "Print the first N numbers in the Fibonacci sequence (where each number is the sum of the two previous: 0, 1, 1, 2, 3, 5, 8, ...).",
+      "difficulty": "hard",
+      "tags": ["python", "loops", "variables", "sequences"],
+      "parsonsSettings": {
+        "initial": "n = int(input('How many Fibonacci numbers? '))\na = 0\nb = 1\nfor i in range(n):\n    print(a)\n    next_num = a + b\n    a = b\n    b = next_num",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "prime_checker",
+      "title": "Check If Number Is Prime",
+      "description": "Ask the user for a number and determine if it is prime (only divisible by 1 and itself).",
+      "difficulty": "hard",
+      "tags": ["python", "loops", "conditionals", "modulo"],
+      "parsonsSettings": {
+        "initial": "num = int(input('Check if prime: '))\nis_prime = True\nfor i in range(2, num):\n    if num % i == 0:\n        is_prime = False\n        break\nif is_prime and num > 1:\n    print('Prime')\nelse:\n    print('Not prime')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "list_operations",
+      "title": "Find Min and Max in List",
+      "description": "Ask the user to enter 5 numbers into a list, then find and print the minimum and maximum values.",
+      "difficulty": "medium",
+      "tags": ["python", "lists", "loops", "comparisons"],
+      "parsonsSettings": {
+        "initial": "numbers = []\nfor i in range(5):\n    num = int(input('Enter number: '))\n    numbers.append(num)\nmin_val = numbers[0]\nmax_val = numbers[0]\nfor num in numbers:\n    if num < min_val:\n        min_val = num\n    if num > max_val:\n        max_val = num\nprint(f'Min: {min_val}, Max: {max_val}')",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "nested_loops_grid",
+      "title": "Print a Number Grid",
+      "description": "Print a 3x3 grid where each cell contains the product of its row and column numbers (starting from 1).",
+      "difficulty": "medium",
+      "tags": ["python", "nested_loops", "multiplication"],
+      "parsonsSettings": {
+        "initial": "for row in range(1, 4):\n    for col in range(1, 4):\n        product = row * col\n        print(product, end=' ')\n    print()",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "string_repeater",
+      "title": "Repeat String N Times",
+      "description": "Ask the user for a string and a number N, then print that string N times on separate lines.",
+      "difficulty": "easy",
+      "tags": ["python", "loops", "strings"],
+      "parsonsSettings": {
+        "initial": "text = input('Enter text: ')\ntimes = int(input('Repeat how many times? '))\nfor i in range(times):\n    print(text)",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    },
+    {
+      "id": "countdown_timer",
+      "title": "Countdown from N to 0",
+      "description": "Ask the user for a number N and print a countdown from N down to 0.",
+      "difficulty": "easy",
+      "tags": ["python", "loops", "countdown"],
+      "parsonsSettings": {
+        "initial": "n = int(input('Countdown from: '))\nfor i in range(n, -1, -1):\n    print(i)",
+        "options": {
+          "sortableId": "sortable",
+          "trashId": "sortableTrash",
+          "max_wrong_lines": 0,
+          "grader": "ParsonsWidget._graders.LineBasedGrader",
+          "can_indent": true,
+          "x_indent": 50,
+          "exec_limit": 2500,
+          "feedback_cb": true,
+          "show_feedback": true
+        }
+      }
+    }
 ]
