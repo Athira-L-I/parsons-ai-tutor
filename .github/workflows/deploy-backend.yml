@@ -1,0 +1,103 @@
+name: Deploy Backend to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy backend files to Droplet
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: 'backend/*'
+          target: '/home/parsons/'
+          strip_components: 1
+          rm: false
+
+      - name: Deploy and restart service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            echo "🚀 Starting deployment..."
+            cd /home/parsons/
+            
+            # Stop existing service
+            echo "Stopping existing service..."
+            pkill -f "python.*main.py" || true
+            sleep 3
+            
+            # Clean Python environment
+            echo "Cleaning environment..."
+            rm -rf venv/
+            rm -rf __pycache__/
+            find . -name "*.pyc" -delete 2>/dev/null || true
+            
+            # Create fresh virtual environment
+            echo "Creating virtual environment..."
+            python3 -m venv venv
+            source venv/bin/activate
+            
+            # Upgrade pip
+            python -m pip install --upgrade pip
+            
+            # Install dependencies with clean cache
+            echo "Installing dependencies..."
+            pip install --no-cache-dir -r requirements.txt
+            
+            # Verify installation
+            echo "Verifying installation..."
+            python -c "import fastapi, pydantic, openai; print('✅ All packages imported successfully')"
+            
+            # Create environment file
+            echo "Setting up environment..."
+            cat > .env << 'EOF'
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            ENVIRONMENT=production
+            PORT=8000
+            HOST=0.0.0.0
+            EOF
+            
+            # Start service
+            echo "Starting service..."
+            nohup python main.py > server.log 2>&1 &
+            
+            # Verify service started
+            sleep 10
+            if pgrep -f "python.*main.py" > /dev/null; then
+              echo "✅ Service started successfully"
+              
+              # Test health endpoint
+              if curl -f http://localhost:8000/health 2>/dev/null; then
+                echo "✅ Health check passed"
+              else
+                echo "⚠️ Health check failed but service is running"
+              fi
+            else
+              echo "❌ Service failed to start"
+              echo "=== Recent logs ==="
+              tail -20 server.log
+              exit 1
+            fi
+            
+            echo "🎉 Deployment completed successfully!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check the logs above for details."
