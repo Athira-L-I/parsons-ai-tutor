@@ -19,9 +19,21 @@ async def get_feedback(request: FeedbackRequest):
     
     # Generate feedback
     try:
+        # Convert errorContext to dict if provided
+        error_context = None
+        if request.errorContext:
+            error_context = {
+                "errorType": request.errorContext.errorType,
+                "errorLines": request.errorContext.errorLines,
+                "widgetMessage": request.errorContext.widgetMessage,
+                "rawErrors": request.errorContext.rawErrors,
+                "rawLogErrors": request.errorContext.rawLogErrors
+            }
+        
         feedback = generate_feedback(
             problem["parsonsSettings"], 
-            request.userSolution
+            request.userSolution,
+            error_context
         )
         
         return {"feedback": feedback}

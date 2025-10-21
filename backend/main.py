@@ -7,7 +7,8 @@ app = FastAPI(title="Parsons Problem Tutor API")
 # Setup CORS
 origins = [
     "http://localhost:3000",  # Next.js frontend
-    "https://parsons-problem-tutor.vercel.app",  # Production frontend (example)
+    "https://parsons-problem-tutor.vercel.app",  # Production frontend
+    "http://165.232.181.129",
 ]
 
 app.add_middleware(

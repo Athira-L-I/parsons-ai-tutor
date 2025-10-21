@@ -52,6 +52,12 @@ export class EventLogger {
       consecutiveFailures: 0,
       incorrectPositionErrors: 0,
       incorrectIndentErrors: 0,
+      widgetHintCount: 0,
+      socraticHintCount: 0,
+      totalHintCount: 0,
+      hintsPerAction: 0,
+      timeToFirstHint: 0,
+      avgTimeBetweenHints: 0,
     };
   }
 
@@ -69,19 +75,52 @@ export class EventLogger {
   }
 
   /**
+   * Get the actual session start time from events (earliest timestamp)
+   */
+  private getActualStartTime(): number {
+    if (this.events.length === 0) {
+      return this.sessionStartTime;
+    }
+
+    // Find all init events and use the earliest timestamp
+    const initEvents = this.events.filter((e) => e.type === 'init');
+    if (initEvents.length > 0) {
+      return Math.min(...initEvents.map((e) => e.time));
+    }
+
+    // If no init events, use the earliest event timestamp
+    return Math.min(...this.events.map((e) => e.time));
+  }
+
+  /**
    * Incrementally update behavioral features
    */
   private updateFeatures(event: ParsonsEvent): void {
-    const timeSinceStart = event.time - this.sessionStartTime;
+    // Use actual start time from events, not constructor time
+    const actualStartTime = this.getActualStartTime();
+    const timeSinceStart = event.time - actualStartTime;
 
     // Time-based features
     this.features.totalTime = timeSinceStart;
 
+    // Fix timeToFirstFeedback calculation
     if (event.type === 'feedback' && this.features.timeToFirstFeedback === 0) {
       this.features.timeToFirstFeedback = timeSinceStart;
+
+      // Validation: warn if negative (shouldn't happen now)
+      if (this.features.timeToFirstFeedback < 0) {
+        console.warn(
+          `[EventLogger] Negative timeToFirstFeedback: ${this.features.timeToFirstFeedback}ms`
+        );
+        console.warn(
+          `Event time: ${event.time}, Start time: ${actualStartTime}`
+        );
+      }
     }
 
+    // Fix avgTimeBetweenActions to use consistent reference
     if (this.events.length > 1) {
+      // Calculate based on actual event sequence, not session start
       let totalTimeDiff = 0;
       for (let i = 1; i < this.events.length; i++) {
         totalTimeDiff += this.events[i].time - this.events[i - 1].time;
@@ -129,6 +168,9 @@ export class EventLogger {
     if (event.type === 'feedback') {
       this.updateSuccessPatterns(event);
     }
+
+    // Hint patterns
+    this.updateHintFeatures(event, actualStartTime);
   }
 
   private updateSuccessPatterns(feedbackEvent: ParsonsEvent): void {
@@ -164,16 +206,71 @@ export class EventLogger {
     }
   }
 
+  private updateHintFeatures(
+    event: ParsonsEvent,
+    actualStartTime: number
+  ): void {
+    // Count hint events
+    if (event.type === 'X-Hint.Widget') {
+      this.features.widgetHintCount++;
+    } else if (event.type === 'X-Hint.Socratic') {
+      this.features.socraticHintCount++;
+    }
+
+    // Update total hint count
+    this.features.totalHintCount =
+      this.features.widgetHintCount + this.features.socraticHintCount;
+
+    // Calculate hints per action ratio
+    const actionEvents = this.events.filter((e) =>
+      [
+        'moveOutput',
+        'addOutput',
+        'removeOutput',
+        'moveInput',
+        'feedback',
+        'toggle',
+      ].includes(e.type)
+    );
+    this.features.hintsPerAction =
+      actionEvents.length > 0
+        ? this.features.totalHintCount / actionEvents.length
+        : 0;
+
+    // Time to first hint
+    if (
+      (event.type === 'X-Hint.Widget' || event.type === 'X-Hint.Socratic') &&
+      this.features.timeToFirstHint === 0
+    ) {
+      this.features.timeToFirstHint = event.time - actualStartTime;
+    }
+
+    // Average time between hints
+    const hintEvents = this.events.filter(
+      (e) => e.type === 'X-Hint.Widget' || e.type === 'X-Hint.Socratic'
+    );
+    if (hintEvents.length > 1) {
+      let totalTimeDiff = 0;
+      for (let i = 1; i < hintEvents.length; i++) {
+        totalTimeDiff += hintEvents[i].time - hintEvents[i - 1].time;
+      }
+      this.features.avgTimeBetweenHints =
+        totalTimeDiff / (hintEvents.length - 1);
+    }
+  }
+
   /**
-   * Get current session snapshot
+   * Get current session snapshot with corrected startTime
    */
   getSessionSnapshot(): SessionSnapshot {
+    const actualStartTime = this.getActualStartTime();
+
     return {
       sessionId: this.sessionId,
       studentId: this.studentId,
       problemId: this.problemId,
       schoolId: this.schoolId,
-      startTime: this.sessionStartTime,
+      startTime: actualStartTime, // Use actual start time from events
       endTime: this.lastEventTime,
       events: [...this.events],
       features: { ...this.features },

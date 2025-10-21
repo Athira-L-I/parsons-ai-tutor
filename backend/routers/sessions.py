@@ -10,14 +10,23 @@ from typing import Optional
 from services.progsnap2_export import export_to_progsnap2
 from models import SessionSnapshot
 
+# Use local path for development, Azure path for production
+if os.environ.get('WEBSITE_SITE_NAME'):  # Azure App Service sets this
+    # Production: Azure persistent storage
+    DATA_DIR = os.path.join(os.environ.get('HOME', '/home'), 'data', 'sessions')
+else:
+    # Local development: relative to backend folder
+    DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'sessions')
+
 # Ensure data directory exists
-os.makedirs("data/sessions", exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 
 router = APIRouter()
+
 @router.post("")
 async def save_session(snapshot: SessionSnapshot):
     try:
-        filename = f"data/sessions/{snapshot.sessionId}.json"
+        filename = f"{DATA_DIR}/{snapshot.sessionId}.json"
         data = snapshot.dict()
         data['savedAt'] = datetime.now().isoformat()
         with open(filename, 'w') as f:
@@ -32,11 +41,11 @@ async def export_progsnap2(school: Optional[str] = None):
     try:
         # Load all sessions
         sessions = []
-        for filename in os.listdir("data/sessions"):
+        for filename in os.listdir(DATA_DIR):
             if not filename.endswith('.json'):
                 continue
 
-            with open(f"data/sessions/{filename}", 'r') as f:
+            with open(f"{DATA_DIR}/{filename}", 'r') as f:
                 session = json.load(f)
             
             # Filter by school if specified
@@ -65,16 +74,15 @@ async def get_stats_summary():
     try:
         # Load all sessions
         sessions = []
-        session_dir = "data/sessions"
         
-        if not os.path.exists(session_dir):
-            os.makedirs(session_dir, exist_ok=True)
+        if not os.path.exists(DATA_DIR):
+            os.makedirs(DATA_DIR, exist_ok=True)
             
-        for filename in os.listdir(session_dir):
+        for filename in os.listdir(DATA_DIR):
             if not filename.endswith('.json'):
                 continue
                 
-            with open(f"{session_dir}/{filename}", 'r') as f:
+            with open(f"{DATA_DIR}/{filename}", 'r') as f:
                 session = json.load(f)
                 sessions.append(session)
         
@@ -128,16 +136,15 @@ async def get_sessions(school: Optional[str] = None):
     """Get list of sessions with optional school filter"""
     try:
         sessions = []
-        session_dir = "data/sessions"
         
-        if not os.path.exists(session_dir):
+        if not os.path.exists(DATA_DIR):
             return []
             
-        for filename in os.listdir(session_dir):
+        for filename in os.listdir(DATA_DIR):
             if not filename.endswith('.json'):
                 continue
                 
-            with open(f"{session_dir}/{filename}", 'r') as f:
+            with open(f"{DATA_DIR}/{filename}", 'r') as f:
                 session = json.load(f)
                 
                 # Filter by school if specified

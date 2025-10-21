@@ -48,5 +48,5 @@ yarn-error.log*
 Thumbs.db
 
 # Project specific
-/backend/data/*.json
 /backend/data/sessions/*.json
+.vercel

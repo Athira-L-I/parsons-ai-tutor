@@ -110,6 +110,10 @@ The FastAPI backend can be deployed on platforms like Railway or Render:
 railway up
 ```
 
+## Documentation
+
+- **[Hint Logging Evolution](docs/HINT_LOGGING_EVOLUTION.md)**: Complete guide for evolving from simple socratic hints to full conversational chat, maintaining ProgSnap2 compliance and backwards compatibility.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
