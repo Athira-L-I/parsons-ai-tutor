@@ -25,9 +25,9 @@ jobs:
           target: '/home/parsons/backend/'
           strip_components: 1
           overwrite: true
-          rm: false # Don't remove files that aren't in source
+          rm: false
 
-      - name: Restart service
+      - name: Deploy and restart service
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.DROPLET_HOST }}
@@ -37,13 +37,67 @@ jobs:
           script: |
             cd /home/parsons/backend
 
-            # Backup sessions before updating (safety measure)
-            if [ -d "data/sessions" ]; then
-              echo "Sessions exist, keeping them safe"
+            # Stop parsons service
+            echo "Stopping parsons service..."
+            systemctl stop parsons || true
+
+            # Kill any processes using port 8000
+            echo "Killing processes on port 8000..."
+            lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+            
+            # Alternative: kill by process name
+            pkill -9 -f "gunicorn.*main:app" || true
+            pkill -9 -f "uvicorn.*main:app" || true
+            pkill -9 -f "python.*main.py" || true
+
+            # Wait for processes to die
+            sleep 5
+
+            # Verify port is free
+            if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null; then
+              echo "❌ Port 8000 still in use"
+              lsof -Pi :8000 -sTCP:LISTEN
+              exit 1
+            else
+              echo "✅ Port 8000 is free"
             fi
 
+            # Backup sessions before updating
+            if [ -d "data/sessions" ]; then
+              echo "✅ Sessions exist, keeping them safe"
+            fi
+
+            # Update dependencies
+            echo "Installing dependencies..."
             source venv/bin/activate
             pip install -r requirements.txt --quiet
-            systemctl restart parsons
-            sleep 2
-            systemctl status parsons --no-pager
+
+            # Create/update environment file
+            cat > .env << 'EOF'
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            PORT=8000
+            ENVIRONMENT=production
+            EOF
+
+            # Start service
+            echo "Starting parsons service..."
+            systemctl start parsons
+
+            # Wait and check status
+            sleep 10
+            if systemctl is-active --quiet parsons; then
+              echo "✅ Service started successfully"
+              systemctl status parsons --no-pager
+              
+              # Test API
+              if curl -f http://localhost:8000/api/problems > /dev/null 2>&1; then
+                echo "✅ API responding"
+              else
+                echo "⚠️ API not responding yet"
+              fi
+            else
+              echo "❌ Service failed to start"
+              systemctl status parsons --no-pager
+              journalctl -xeu parsons.service --no-pager -n 20
+              exit 1
+            fi
