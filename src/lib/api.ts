@@ -1,15 +1,13 @@
 import axios from 'axios';
 import { ParsonsSettings } from '@/@types/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (
-  process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000'
-);
+const API_BASE_URL = ''; // to use relative path
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
 });
 
 export const fetchProblems = async () => {
@@ -36,7 +34,7 @@ export const checkSolution = async (problemId: string, solution: string[]) => {
   try {
     const response = await apiClient.post(`/api/solutions/validate`, {
       problemId,
-      solution
+      solution,
     });
     return response.data;
   } catch (error) {
@@ -46,8 +44,8 @@ export const checkSolution = async (problemId: string, solution: string[]) => {
 };
 
 export const generateFeedback = async (
-  problemId: string, 
-  solution: string[], 
+  problemId: string,
+  solution: string[],
   errorContext?: {
     errorType: string;
     errorLines: number[];
@@ -60,7 +58,7 @@ export const generateFeedback = async (
     const response = await apiClient.post(`/api/feedback`, {
       problemId,
       userSolution: solution,
-      errorContext: errorContext
+      errorContext: errorContext,
     });
     return response.data.feedback;
   } catch (error) {
@@ -72,7 +70,7 @@ export const generateFeedback = async (
 export const generateProblem = async (sourceCode: string) => {
   try {
     const response = await apiClient.post('/api/problems/generate', {
-      sourceCode
+      sourceCode,
     });
     return response.data;
   } catch (error) {
