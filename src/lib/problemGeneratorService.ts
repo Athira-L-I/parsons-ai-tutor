@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ParsonsSettings, ParsonsGrader } from '@/@types/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 /**
  * Service for generating Parsons problems from source code
