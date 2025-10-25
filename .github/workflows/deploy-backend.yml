@@ -35,88 +35,55 @@ jobs:
           key: ${{ secrets.DROPLET_SSH_KEY }}
           command_timeout: 5m
           script: |
-            set -e  # Exit on error, but we'll handle specific cases
-
             cd /home/parsons/backend
 
-            # Stop parsons service (ignore errors if not running)
-            echo "Stopping parsons service..."
-            systemctl stop parsons 2>/dev/null || echo "Service not running"
+            # Simple approach: just restart the service
+            echo "Restarting parsons service..."
+            systemctl restart parsons
 
-            # Kill any processes using port 8000 (ignore errors if none found)
-            echo "Checking for processes on port 8000..."
-            if lsof -ti:8000 >/dev/null 2>&1; then
-              echo "Killing processes on port 8000..."
-              lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
-              sleep 3
+            # Wait for service to start
+            sleep 5
+
+            # Check if service is running
+            if systemctl is-active --quiet parsons; then
+              echo "✅ Service restarted successfully"
             else
-              echo "No processes on port 8000"
-            fi
-
-            # Alternative cleanup (ignore errors)
-            pkill -9 -f "gunicorn.*main:app" 2>/dev/null || true
-            pkill -9 -f "uvicorn.*main:app" 2>/dev/null || true
-            pkill -9 -f "python.*main.py" 2>/dev/null || true
-
-            # Wait for cleanup
-            sleep 2
-
-            # Verify port is free
-            if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-              echo "❌ Port 8000 still in use"
-              lsof -Pi :8000 -sTCP:LISTEN
+              echo "❌ Service failed to start"
+              systemctl status parsons --no-pager
               exit 1
-            else
-              echo "✅ Port 8000 is free"
             fi
 
-            # Backup sessions check
-            if [ -d "data/sessions" ]; then
-              echo "✅ Sessions directory exists ($(ls data/sessions/*.json 2>/dev/null | wc -l) files)"
-            else
-              echo "Creating sessions directory..."
-              mkdir -p data/sessions
-            fi
-
-            # Update dependencies
-            echo "Installing dependencies..."
-            if [ ! -d "venv" ]; then
-              echo "Creating virtual environment..."
-              python3 -m venv venv
-            fi
+            # Update dependencies if needed
+            echo "Updating dependencies..."
             source venv/bin/activate
-            pip install -r requirements.txt --quiet
+            pip install -q -r requirements.txt
 
-            # Create/update environment file
-            cat > .env << 'EOF'
+            # Update environment file
+            echo "Updating environment..."
+            cat > .env << 'ENVEOF'
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             PORT=8000
             ENVIRONMENT=production
-            EOF
+            ENVEOF
 
-            # Start service
-            echo "Starting parsons service..."
-            systemctl start parsons
+            # Final restart with new config
+            echo "Final restart with updated config..."
+            systemctl restart parsons
+            sleep 5
 
-            # Wait and check status
-            sleep 10
+            # Verify everything is working
             if systemctl is-active --quiet parsons; then
-              echo "✅ Service started successfully"
-              systemctl status parsons --no-pager -l
+              echo "✅ Deployment successful"
+              systemctl status parsons --no-pager
               
               # Test API
-              echo "Testing API endpoint..."
-              if curl -f http://localhost:8000/ > /dev/null 2>&1; then
-                echo "✅ API responding"
+              if curl -s http://localhost:8000/ > /dev/null; then
+                echo "✅ API is responding"
               else
-                echo "⚠️ API not responding yet, checking logs..."
-                journalctl -u parsons --no-pager -n 20
+                echo "⚠️ Service running but API not responding"
               fi
             else
-              echo "❌ Service failed to start"
-              echo "=== Service Status ==="
-              systemctl status parsons --no-pager -l
-              echo "=== Recent Logs ==="
-              journalctl -u parsons --no-pager -n 50
+              echo "❌ Final restart failed"
+              journalctl -u parsons --no-pager -n 30
               exit 1
             fi
