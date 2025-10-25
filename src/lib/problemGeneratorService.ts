@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ParsonsSettings, ParsonsGrader } from '@/@types/types';
 
-const API_URL = process.env.BACKEND || 'http://localhost:8000';
+const API_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
 /**
  * Service for generating Parsons problems from source code

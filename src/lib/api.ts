@@ -22,7 +22,7 @@ export const fetchProblems = async () => {
 
 export const fetchProblemById = async (id: string) => {
   try {
-    const response = await apiClient.get(`/api/problems/${id}`);
+    const response = await apiClient.get(`${BACKEND_URL}/api/problems/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching problem ${id}:`, error);
@@ -69,9 +69,12 @@ export const generateFeedback = async (
 
 export const generateProblem = async (sourceCode: string) => {
   try {
-    const response = await apiClient.post('/api/problems/generate', {
-      sourceCode,
-    });
+    const response = await apiClient.post(
+      process.env.BACKEND_URL + '/api/problems/generate',
+      {
+        sourceCode,
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('Error generating problem:', error);
