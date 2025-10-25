@@ -41,7 +41,9 @@ export default function AdminPage() {
       setError(null);
 
       // Fetch stats
-      const statsRes = await fetch('/api/sessions/stats/summary');
+      const statsRes = await fetch(
+        `${process.env.BACKEND_URL}/api/sessions/stats/summary`
+      );
       if (!statsRes.ok) {
         throw new Error(`Stats API error: ${statsRes.status}`);
       }
@@ -53,7 +55,7 @@ export default function AdminPage() {
         selectedSchool === 'all'
           ? '/api/sessions'
           : `/api/sessions?school=${selectedSchool}`;
-      const sessionsRes = await fetch(sessionsUrl);
+      const sessionsRes = await fetch(process.env.BACKEND_URL + sessionsUrl);
       if (!sessionsRes.ok) {
         throw new Error(`Sessions API error: ${sessionsRes.status}`);
       }

@@ -127,7 +127,7 @@ export function useSimpleStorage(problemId: string) {
     setIsSaving(true);
 
     try {
-      const response = await fetch('/api/sessions', {
+      const response = await fetch(`${process.env.BACKEND_URL}/api/problems/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(snapshot),
