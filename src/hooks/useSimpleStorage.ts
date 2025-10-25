@@ -127,11 +127,14 @@ export function useSimpleStorage(problemId: string) {
     setIsSaving(true);
 
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/api/problems/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(snapshot),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/problems/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(snapshot),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to save session');
