@@ -44,7 +44,8 @@ jobs:
             # Kill any processes using port 8000
             echo "Killing processes on port 8000..."
             lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-            
+            true
+
             # Alternative: kill by process name
             pkill -9 -f "gunicorn.*main:app" || true
             pkill -9 -f "uvicorn.*main:app" || true
