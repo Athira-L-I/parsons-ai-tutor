@@ -10,7 +10,7 @@ import { ParsonsEvent, SessionSnapshot } from './types';
 export class ParsonsWidgetAdapter {
   private logger: EventLogger;
   private widgetInstance: any;
-  private lastErrorData: Array<{type: string, lines: number[] | number}> = [];
+  private lastErrorData: Array<{ type: string; lines: number[] | number }> = [];
 
   constructor(
     widgetInstance: any,
@@ -59,7 +59,11 @@ export class ParsonsWidgetAdapter {
       console.log('[Adapter] addLogEntry called:', entry);
 
       // ✅ CAPTURE ERROR DATA for hint logging
-      if (entry.type === 'feedback' && entry.errors && Array.isArray(entry.errors)) {
+      if (
+        entry.type === 'feedback' &&
+        entry.errors &&
+        Array.isArray(entry.errors)
+      ) {
         this.lastErrorData = entry.errors.map((error: any) => ({
           type: error.type || 'unknown',
           lines: (() => {
@@ -73,9 +77,12 @@ export class ParsonsWidgetAdapter {
             } else {
               return [];
             }
-          })()
+          })(),
         }));
-        console.log('[Adapter] Captured error data for hints:', this.lastErrorData);
+        console.log(
+          '[Adapter] Captured error data for hints:',
+          this.lastErrorData
+        );
       }
 
       // Let native widget do its thing
@@ -140,9 +147,8 @@ export class ParsonsWidgetAdapter {
       // ✅ FIXED: Only log if not already logged by addLogEntry
       // Check if this feedback was already captured
       const recentEvents = this.logger.getSessionSnapshot().events.slice(-3);
-      const hasFeedbackEvent = recentEvents.some(e => 
-        e.type === 'feedback' && 
-        Math.abs(e.time - Date.now()) < 1000 // Within last second
+      const hasFeedbackEvent = recentEvents.some(
+        (e) => e.type === 'feedback' && Math.abs(e.time - Date.now()) < 1000 // Within last second
       );
 
       if (!hasFeedbackEvent) {
@@ -162,7 +168,9 @@ export class ParsonsWidgetAdapter {
 
         console.log('[Adapter] Logged feedback event');
       } else {
-        console.log('[Adapter] Feedback event already logged, skipping duplicate');
+        console.log(
+          '[Adapter] Feedback event already logged, skipping duplicate'
+        );
       }
 
       return feedback;
@@ -353,10 +361,10 @@ export class ParsonsWidgetAdapter {
   /**
    * Get last captured error data from widget feedback
    */
-  getLastErrorData(): Array<{type: string, lines: number[]}> {
-    return this.lastErrorData.map(error => ({
+  getLastErrorData(): Array<{ type: string; lines: number[] }> {
+    return this.lastErrorData.map((error) => ({
       type: error.type,
-      lines: Array.isArray(error.lines) ? error.lines : [error.lines]
+      lines: Array.isArray(error.lines) ? error.lines : [error.lines],
     }));
   }
 
