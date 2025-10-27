@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ParsonsSettings, ParsonsGrader } from '@/@types/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.API_URL || '';
 
 /**
  * Service for generating Parsons problems from source code
@@ -21,12 +21,9 @@ export class ProblemGeneratorService {
    */
   async generateProblem(sourceCode: string): Promise<ParsonsSettings> {
     try {
-      const response = await axios.post(
-        `${this.apiUrl}/api/problems/generate`,
-        {
-          sourceCode,
-        }
-      );
+      const response = await axios.post(`/api/problems/generate`, {
+        sourceCode,
+      });
 
       return response.data.parsonsSettings;
     } catch (error) {

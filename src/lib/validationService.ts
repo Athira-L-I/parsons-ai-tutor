@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ParsonsSettings, ParsonsGrader } from '@/@types/types';
 
-const API_URL = '';
+const API_URL = process.env.API_URL || '';
 
 /**
  * Service for validating Parsons problem solutions and generating feedback
@@ -25,13 +25,10 @@ export class ValidationService {
     solution: string[]
   ): Promise<{ isCorrect: boolean; details: string }> {
     try {
-      const response = await axios.post(
-        `${this.apiUrl}/api/solutions/validate`,
-        {
-          problemId,
-          solution,
-        }
-      );
+      const response = await axios.post(`/api/solutions/validate`, {
+        problemId,
+        solution,
+      });
 
       return response.data;
     } catch (error) {
@@ -108,7 +105,7 @@ export class ValidationService {
     solution: string[]
   ): Promise<string> {
     try {
-      const response = await axios.post(`${this.apiUrl}/api/feedback`, {
+      const response = await axios.post(`/api/feedback`, {
         problemId,
         userSolution: solution,
       });
