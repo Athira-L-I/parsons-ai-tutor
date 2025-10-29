@@ -77,7 +77,7 @@ jobs:
               systemctl status parsons --no-pager
               
               # Test API
-              if curl -s http://localhost:8000/ > /dev/null; then
+              if curl -s https://parsons-tutor.dedyn.io/ > /dev/null; then
                 echo "✅ API is responding"
               else
                 echo "⚠️ Service running but API not responding"
