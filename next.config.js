@@ -3,11 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   async rewrites() {
-    const apiUrl = process.env.API_URL ;
+    const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||   process.env.NODE_ENV === 'production'    ? 'https://parsons-tutor.dedyn.io'    : 'http://localhost:8000';
+
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        destination: `${API_URL}/api/:path*`,
       },
     ];
   },

@@ -2,7 +2,10 @@ import axios from 'axios';
 import { ParsonsSettings } from '@/@types/types';
 import { isParsonsWidgetLoaded } from './parsonsLoader';
 
-const API_URL = process.env.API_URL || '';
+const API_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NODE_ENV === 'production'
+    ? 'https://parsons-tutor.dedyn.io'
+    : 'http://localhost:8000';
 
 /**
  * Enhanced service for validating Parsons problem solutions

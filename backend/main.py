@@ -8,10 +8,6 @@ app = FastAPI(title="Parsons Problem Tutor API")
 origins = [
     "http://localhost:3000",  # Next.js frontend
     "https://parsons-problem-tutor.vercel.app",  # Production frontend
-    "http://165.232.181.129:8000",
-    # Add these for Vercel proxy
-    "https://*.vercel.app",
-    "*"  # Temporary - remove after testing
 ]
 
 app.add_middleware(
