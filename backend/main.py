@@ -8,6 +8,7 @@ app = FastAPI(title="Parsons Problem Tutor API", redirect_slashes=False)
 origins = [
     "http://localhost:3000",  # Next.js frontend
     "https://parsons-tutor.vercel.app",  # Production frontend
+    "https://parsons-tutor.dedyn.io", # Production backend domain
 ]
 
 app.add_middleware(
