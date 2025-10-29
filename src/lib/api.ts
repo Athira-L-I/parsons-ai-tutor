@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { ParsonsSettings } from '@/@types/types';
 
-const API_URL = process.env.API_URL;
+const API_URL =
+  process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000';
 
 const apiClient = axios.create({
   baseURL: API_URL,
