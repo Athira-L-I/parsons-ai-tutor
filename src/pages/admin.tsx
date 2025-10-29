@@ -51,7 +51,7 @@ export default function AdminPage() {
       // Fetch sessions
       const sessionsUrl =
         selectedSchool === 'all'
-          ? '/api/sessions'
+          ? '/api/sessions/'
           : `/api/sessions?school=${selectedSchool}`;
       const sessionsRes = await fetch(sessionsUrl);
       if (!sessionsRes.ok) {
