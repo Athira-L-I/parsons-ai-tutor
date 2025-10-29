@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import problems, solutions, feedback, sessions  
 
-app = FastAPI(title="Parsons Problem Tutor API")
+app = FastAPI(title="Parsons Problem Tutor API", redirect_slashes=False)
 
 # Setup CORS
 origins = [
