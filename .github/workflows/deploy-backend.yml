@@ -58,13 +58,10 @@ jobs:
             source venv/bin/activate
             pip install -q -r requirements.txt
 
-            # Update environment file
             echo "Updating environment..."
-            cat > .env << 'ENVEOF'
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            PORT=8000
-            ENVIRONMENT=production
-            ENVEOF
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+            echo "PORT=8000" >> .env
+            echo "ENVIRONMENT=production" >> .env
 
             # Final restart with new config
             echo "Final restart with updated config..."

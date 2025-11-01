@@ -25,10 +25,10 @@ async def health():
     return {"status": "healthy", "message": "Parsons API is running"}
 
 # Include routers
-app.include_router(problems.router, prefix="/api/problems/", tags=["problems"])
-app.include_router(solutions.router, prefix="/api/solutions/", tags=["solutions"])
-app.include_router(feedback.router, prefix="/api/feedback/", tags=["feedback"])
-app.include_router(sessions.router, prefix="/api/sessions/", tags=["sessions"])
+app.include_router(problems.router, prefix="/api/problems", tags=["problems"])
+app.include_router(solutions.router, prefix="/api/solutions", tags=["solutions"])
+app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
+app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
 
 @app.get("/")
 async def root():
