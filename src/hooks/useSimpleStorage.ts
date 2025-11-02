@@ -126,20 +126,31 @@ export function useSimpleStorage(problemId: string) {
     isSavingRef.current = true;
     setIsSaving(true);
 
+    // ✅ DEFINE backend URL
+    const API_URL =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://parsons-tutor.dedyn.io'
+        : 'http://localhost:8000');
+
     try {
-      const response = await fetch('/api/sessions', {  // Remove trailing slash
+      // ✅ FIXED: Use the full backend URL
+      const response = await fetch(`${API_URL}/api/sessions`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json',
         },
         body: JSON.stringify(snapshot),
-        credentials: 'same-origin'  // Add this for same-origin requests
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(`Failed to save session: ${response.status} ${errorData ? JSON.stringify(errorData) : ''}`);
+        throw new Error(
+          `Failed to save session: ${response.status} ${
+            errorData ? JSON.stringify(errorData) : ''
+          }`
+        );
       }
 
       console.log('Session saved:', snapshot.sessionId);
