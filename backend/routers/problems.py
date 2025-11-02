@@ -36,13 +36,7 @@ async def get_all_problems():
     Get all available Parsons problems
     """
     problems = load_problems()
-    
-    # Add a random completed status for frontend demo
-    import random
-    for problem in problems:
-        if "completed" not in problem:
-            problem["completed"] = random.choice([True, False])
-    
+          
     return problems
 
 @router.get("/{problem_id}")

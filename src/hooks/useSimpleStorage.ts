@@ -127,19 +127,25 @@ export function useSimpleStorage(problemId: string) {
     setIsSaving(true);
 
     try {
-      const response = await fetch(`/api/sessions/`, {
+      const response = await fetch('/api/sessions', {  // Remove trailing slash
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(snapshot),
+        credentials: 'same-origin'  // Add this for same-origin requests
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save session');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(`Failed to save session: ${response.status} ${errorData ? JSON.stringify(errorData) : ''}`);
       }
 
       console.log('Session saved:', snapshot.sessionId);
     } catch (error) {
       console.error('Failed to save session:', error);
+      throw error;
     } finally {
       isSavingRef.current = false;
       setIsSaving(false);
